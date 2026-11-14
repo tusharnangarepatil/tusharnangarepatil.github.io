@@ -1,0 +1,2538 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>श्री सिद्धनाथ दूध संकलन केंद्र, नांगरेमळा - Milk Billing</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Inter', 'Noto Sans Devanagari', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    @media screen and (max-width: 768px) {
+      input, select, textarea {
+        font-size: 16px !important;
+      }
+    }
+    
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      body.batch-print-mode #batchPrintArea,
+      body.batch-print-mode #batchPrintArea * {
+        visibility: visible;
+      }
+      body.batch-print-mode #batchPrintArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      body:not(.batch-print-mode) #printArea,
+      body:not(.batch-print-mode) #printArea * {
+        visibility: visible;
+      }
+      body:not(.batch-print-mode) #printArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 10mm;
+        box-shadow: none !important;
+        border: none !important;
+      }
+      .bill-page-break {
+        page-break-after: always;
+        break-after: page;
+        padding: 10mm;
+      }
+      .bill-page-break:last-child {
+        page-break-after: auto;
+        break-after: auto;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+    
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    .pb-mobile-nav {
+      padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
+    }
+    @media (min-width: 768px) {
+      .pb-mobile-nav {
+        padding-bottom: 2rem;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col">
+
+  <!-- ================= AUTH: LOGIN VIEW ================= -->
+  <section id="loginOverlay" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/95 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 sm:p-8 relative">
+      <div class="text-center mb-6">
+        <div class="w-16 h-16 rounded-2xl bg-amber-400 text-indigo-950 flex items-center justify-center font-bold text-3xl shadow-lg mx-auto mb-3">
+          <i class="fa-solid fa-cow"></i>
+        </div>
+        <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight leading-snug">
+          श्री सिद्धनाथ दूध संकलन केंद्र
+        </h2>
+        <p class="text-xs text-indigo-900 font-semibold mt-1">नांगरेमळा • Milk Billing System</p>
+        <p class="text-xs text-slate-500 mt-2">कृपया पुढे जाण्यासाठी लॉगिन करा</p>
+      </div>
+
+      <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Username / ID</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+              <i class="fa-solid fa-user"></i>
+            </span>
+            <input type="text" id="loginUsername" required placeholder="admin" autocomplete="username"
+              class="w-full pl-10 pr-3.5 py-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Password</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+              <i class="fa-solid fa-lock"></i>
+            </span>
+            <input type="password" id="loginPassword" required placeholder="••••••••" autocomplete="current-password"
+              class="w-full pl-10 pr-11 py-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600">
+            <button type="button" onclick="togglePasswordVisibility()" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600">
+              <i id="togglePassIcon" class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between text-xs pt-1">
+          <label class="flex items-center gap-2 cursor-pointer text-slate-600">
+            <input type="checkbox" id="rememberMe" checked class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+            <span>Remember me</span>
+                 </div>
+
+        <button type="submit" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white rounded-xl font-bold text-sm shadow-md transition flex items-center justify-center gap-2 mt-2">
+          <i class="fa-solid fa-right-to-bracket"></i>
+          <span>लॉगिन करा (Login)</span>
+        </button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ================= MAIN APP WRAPPER ================= -->
+  <div id="appContainer" class="flex-1 flex flex-col hidden">
+
+    <!-- Top App Header -->
+    <header class="bg-indigo-950 text-white shadow-lg sticky top-0 z-30 no-print">
+      <div class="max-w-7xl mx-auto px-3.5 py-2.5 sm:px-6 sm:py-3 flex items-center justify-between gap-2">
+        <div class="flex items-center space-x-2.5 min-w-0">
+          <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-400 text-indigo-950 flex items-center justify-center font-bold text-lg sm:text-xl shadow-md shrink-0">
+            <i class="fa-solid fa-cow"></i>
+          </div>
+          <div class="min-w-0">
+            <h1 class="font-bold text-sm sm:text-xl tracking-tight leading-tight text-white truncate">श्री सिद्धनाथ दूध संकलन केंद्र</h1>
+            <p class="text-[11px] sm:text-xs text-indigo-300 truncate">नांगरेमळा • मो. 9420681567</p>
+          </div>
+        </div>
+        
+        <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+          <!-- Desktop Navigation Pills -->
+          <nav class="hidden md:flex items-center space-x-1.5 bg-indigo-900/60 p-1 rounded-xl border border-indigo-800">
+            <button id="tabBtnEntry" onclick="switchTab('entry')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all bg-indigo-600 text-white shadow-sm">
+              <i class="fa-solid fa-pen-to-square"></i>
+              <span>Daily Entry</span>
+            </button>
+            <button id="tabBtnRates" onclick="switchTab('rates')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-indigo-200 hover:text-white transition-all">
+              <i class="fa-solid fa-table-cells"></i>
+              <span>Rate Chart</span>
+            </button>
+            <button id="tabBtnFarmers" onclick="switchTab('farmers')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-indigo-200 hover:text-white transition-all">
+              <i class="fa-solid fa-users"></i>
+              <span>Farmers List</span>
+            </button>
+            <button id="tabBtnBill" onclick="switchTab('bill')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-indigo-200 hover:text-white transition-all">
+              <i class="fa-solid fa-receipt"></i>
+              <span>Bill & Print</span>
+            </button>
+            <button id="tabBtnRecords" onclick="switchTab('records')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-indigo-200 hover:text-white transition-all">
+              <i class="fa-solid fa-database"></i>
+              <span>Entries Log</span>
+            </button>
+          </nav>
+
+          <!-- Manual Pull / Sync Button -->
+          <button id="syncStatusBtn" onclick="pullFromGoogleSheets(true)" title="Sync with Google Sheets" class="px-2.5 py-2 sm:px-3 sm:py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 border border-emerald-500/30 text-xs font-bold transition flex items-center gap-1.5">
+            <i id="syncIcon" class="fa-solid fa-cloud-arrow-up"></i>
+            <span id="syncText" class="hidden sm:inline">Synced</span>
+          </button>
+
+          <button onclick="handleLogout()" title="Logout" class="px-2.5 py-2 sm:px-3 sm:py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500 active:bg-rose-600 text-rose-200 hover:text-white border border-rose-500/30 text-xs font-bold transition flex items-center gap-1.5">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            <span class="hidden sm:inline">Logout</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Mobile Fixed Bottom Navigation Bar -->
+    <nav class="md:hidden fixed bottom-0 inset-x-0 z-40 bg-indigo-950 text-white border-t border-indigo-800 shadow-[0_-4px_16px_rgba(0,0,0,0.2)] no-print pb-[env(safe-area-inset-bottom,0px)]">
+      <div class="grid grid-cols-5 h-16">
+        <button id="mobTabBtnEntry" onclick="switchTab('entry')" class="flex flex-col items-center justify-center gap-1 text-amber-400 font-bold transition-colors">
+          <i class="fa-solid fa-pen-to-square text-base"></i>
+          <span class="text-[10px] leading-none">Entry</span>
+        </button>
+        <button id="mobTabBtnRates" onclick="switchTab('rates')" class="flex flex-col items-center justify-center gap-1 text-indigo-300 hover:text-white font-medium transition-colors">
+          <i class="fa-solid fa-table-cells text-base"></i>
+          <span class="text-[10px] leading-none">Rates</span>
+        </button>
+        <button id="mobTabBtnFarmers" onclick="switchTab('farmers')" class="flex flex-col items-center justify-center gap-1 text-indigo-300 hover:text-white font-medium transition-colors">
+          <i class="fa-solid fa-users text-base"></i>
+          <span class="text-[10px] leading-none">Farmers</span>
+        </button>
+        <button id="mobTabBtnBill" onclick="switchTab('bill')" class="flex flex-col items-center justify-center gap-1 text-indigo-300 hover:text-white font-medium transition-colors">
+          <i class="fa-solid fa-receipt text-base"></i>
+          <span class="text-[10px] leading-none">Bill</span>
+        </button>
+        <button id="mobTabBtnRecords" onclick="switchTab('records')" class="flex flex-col items-center justify-center gap-1 text-indigo-300 hover:text-white font-medium transition-colors">
+          <i class="fa-solid fa-database text-base"></i>
+          <span class="text-[10px] leading-none">Log</span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- Notification Banner -->
+    <div id="toastMessage" class="fixed top-4 left-4 right-4 sm:left-auto sm:right-5 sm:top-5 z-50 transform -translate-y-32 opacity-0 pointer-events-none transition-all duration-300 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 bg-emerald-600 text-white">
+      <i id="toastIcon" class="fa-solid fa-circle-check text-lg shrink-0"></i>
+      <span id="toastText" class="text-xs sm:text-sm font-medium">Data saved successfully!</span>
+    </div>
+
+    <!-- MAIN VIEW CONTAINER -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-3.5 sm:p-6 lg:p-8 pb-mobile-nav">
+
+      <!-- TAB 1: DAILY SHIFT ENTRY -->
+      <section id="viewEntry" class="space-y-5 sm:space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6">
+          
+          <div class="lg:col-span-1 bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between pb-3.5 mb-4 border-b border-slate-100">
+                <h2 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
+                  <span class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm">
+                    <i class="fa-solid fa-plus"></i>
+                  </span>
+                  New Shift Collection
+                </h2>
+                <span id="entryMilkTypeBadge" class="text-xs font-extrabold px-2.5 py-1 bg-amber-100 text-amber-800 rounded-full">
+                  Cow (गाय)
+                </span>
+              </div>
+
+              <form id="entryForm" onsubmit="handleSaveEntry(event)" class="space-y-4">
+                <div>
+                  <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Select Farmer *</label>
+                  <div class="grid grid-cols-3 gap-2">
+                    <div class="col-span-1">
+                      <input type="text" id="entryFarmerId" inputmode="numeric" placeholder="ID" oninput="syncFarmerById(this.value)"
+                        class="w-full px-2.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 font-bold text-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div class="col-span-2">
+                      <select id="entryFarmerSelect" onchange="syncFarmerBySelect(this.value)" required
+                        class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Date *</label>
+                  <input type="date" id="entryDate" required
+                    class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium transition">
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Shift Session *</label>
+                  <div class="grid grid-cols-2 gap-2.5">
+                    <label class="cursor-pointer">
+                      <input type="radio" name="entryShift" value="Morning" checked class="peer sr-only">
+                      <div class="p-3 border-2 border-slate-200 rounded-xl text-center peer-checked:border-amber-500 peer-checked:bg-amber-50 peer-checked:text-amber-900 transition flex flex-col items-center gap-1">
+                        <i class="fa-solid fa-sun text-amber-500 text-base"></i>
+                        <span class="text-xs font-bold">Morning (सकाळ)</span>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="entryShift" value="Evening" class="peer sr-only">
+                      <div class="p-3 border-2 border-slate-200 rounded-xl text-center peer-checked:border-indigo-600 peer-checked:bg-indigo-50 peer-checked:text-indigo-900 transition flex flex-col items-center gap-1">
+                        <i class="fa-solid fa-moon text-indigo-600 text-base"></i>
+                        <span class="text-xs font-bold">Evening (संध्याकाळ)</span>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2.5 pt-1">
+                  <div>
+                    <label class="block text-[11px] sm:text-xs font-bold text-slate-600 mb-1">Liter (दूध)</label>
+                    <input type="number" id="entryLiter" inputmode="decimal" step="0.1" min="0" required placeholder="0.0" oninput="updateLiveEntryRatePreview()"
+                      class="w-full px-2 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 font-semibold text-center focus:ring-2 focus:ring-indigo-500">
+                  </div>
+                  <div>
+                    <label class="block text-[11px] sm:text-xs font-bold text-slate-600 mb-1">FAT (फॅट)</label>
+                    <input type="number" id="entryFat" inputmode="decimal" step="0.1" min="0" max="15" required placeholder="0.0" oninput="updateLiveEntryRatePreview()"
+                      class="w-full px-2 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 font-semibold text-center focus:ring-2 focus:ring-indigo-500">
+                  </div>
+                  <div>
+                    <label class="block text-[11px] sm:text-xs font-bold text-slate-600 mb-1">SNF (एसएनएफ)</label>
+                    <input type="number" id="entrySnf" inputmode="decimal" step="0.1" min="0" max="15" required placeholder="0.0" oninput="updateLiveEntryRatePreview()"
+                      class="w-full px-2 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 font-semibold text-center focus:ring-2 focus:ring-indigo-500">
+                  </div>
+                </div>
+
+                <div id="entryRatePreviewBox" class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs">
+                  <span class="font-semibold text-emerald-800">Chart Rate: <strong id="previewChartRate">₹ 0.00 / L</strong></span>
+                  <span class="font-extrabold text-emerald-900">Amount: <span id="previewChartAmount">₹ 0.00</span></span>
+                </div>
+
+                <div class="pt-1">
+                  <button type="submit" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white rounded-xl font-bold text-sm shadow-md transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    <span>Save Shift Entry</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <div class="mt-5 pt-3 border-t border-slate-100 text-[11px] text-slate-400 text-center">
+              Entries sync automatically with Google Sheets.
+            </div>
+          </div>
+
+          <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6 flex flex-col">
+            <div class="flex items-center justify-between pb-3.5 mb-4 border-b border-slate-100 flex-wrap gap-2">
+              <div>
+                <h2 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
+                  <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm">
+                    <i class="fa-solid fa-list-check"></i>
+                  </span>
+                  Recent Shift Collections
+                </h2>
+                <p class="text-xs text-slate-500 mt-0.5">Newest entries shown first</p>
+              </div>
+              
+              <button onclick="loadSampleData()" class="text-xs px-3 py-2 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 font-semibold rounded-xl border border-slate-200 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-wand-magic-sparkles text-amber-500"></i>
+                <span>Load Sample Data</span>
+              </button>
+            </div>
+
+            <div class="flex-1 overflow-x-auto min-h-[280px] -mx-4 px-4 sm:mx-0 sm:px-0">
+              <table class="w-full text-left text-xs border-collapse min-w-[540px]">
+                <thead>
+                  <tr class="bg-slate-50 text-slate-500 border-b border-slate-200 uppercase font-bold tracking-wider">
+                    <th class="py-2.5 px-2.5">Date</th>
+                    <th class="py-2.5 px-2.5">Farmer</th>
+                    <th class="py-2.5 px-2 text-center">Type</th>
+                    <th class="py-2.5 px-2 text-center">Shift</th>
+                    <th class="py-2.5 px-2 text-right">Liters</th>
+                    <th class="py-2.5 px-2 text-right">FAT</th>
+                    <th class="py-2.5 px-2 text-right">SNF</th>
+                    <th class="py-2.5 px-2 text-center">Del</th>
+                  </tr>
+                </thead>
+                <tbody id="quickEntriesBody" class="divide-y divide-slate-100 text-slate-700">
+                </tbody>
+              </table>
+            </div>
+            
+            <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-xs text-slate-500">
+              <span id="quickEntriesCount">0 entries registered</span>
+              <button onclick="switchTab('bill')" class="text-indigo-600 font-bold hover:underline flex items-center gap-1 py-1">
+                Generate Bill <i class="fa-solid fa-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ================= TAB 2: RATE CHART ================= -->
+      <section id="viewRates" class="hidden space-y-5 sm:space-y-6">
+        
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+            <div>
+              <h2 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
+                <span class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm">
+                  <i class="fa-solid fa-table-cells"></i>
+                </span>
+                Milk Rate Chart (दर पत्रक)
+              </h2>
+              <p class="text-xs text-slate-500 mt-0.5">Configure FAT × SNF rates via Excel, Sheets, or formula</p>
+            </div>
+
+            <div class="grid grid-cols-2 sm:flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200">
+              <button id="rateTabCow" onclick="switchRateChartType('Cow')" class="px-3 py-2 rounded-lg text-xs sm:text-sm font-extrabold bg-amber-500 text-white shadow-sm transition flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-cow"></i>
+                <span>Cow (गाय)</span>
+              </button>
+              <button id="rateTabBuffalo" onclick="switchRateChartType('Buffalo')" class="px-3 py-2 rounded-lg text-xs sm:text-sm font-extrabold text-slate-700 hover:text-slate-900 transition flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-hippo"></i>
+                <span>Buffalo (म्हैस)</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 sm:pt-5">
+            
+            <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/70 flex flex-col justify-between space-y-3">
+              <div>
+                <h3 class="font-bold text-sm text-slate-800 flex items-center gap-2">
+                  <i class="fa-solid fa-file-excel text-emerald-600 text-base"></i>
+                  1. Upload Excel / CSV
+                </h3>
+                <p class="text-[11px] text-slate-500 mt-1">Col A = FAT, Row 1 = SNF (<code>.xlsx</code>, <code>.csv</code>).</p>
+              </div>
+              <div class="space-y-2">
+                <label class="block w-full cursor-pointer text-center py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow transition">
+                  <i class="fa-solid fa-upload mr-1.5"></i> Choose Excel / CSV File
+                  <input type="file" id="excelRateInput" accept=".xlsx,.xls,.csv" onchange="handleExcelRateUpload(event)" class="hidden">
+                </label>
+                <button type="button" onclick="downloadSampleRateExcel()" class="w-full py-2 px-3 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-xl font-semibold text-xs transition flex items-center justify-center gap-1">
+                  <i class="fa-solid fa-download text-indigo-600"></i> Sample Excel Template
+                </button>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/70 flex flex-col justify-between space-y-3">
+              <div>
+                <h3 class="font-bold text-sm text-slate-800 flex items-center gap-2">
+                  <i class="fa-solid fa-table text-indigo-600 text-base"></i>
+                  2. Import Google Sheets
+                </h3>
+                <p class="text-[11px] text-slate-500 mt-1">Paste published Google Sheets CSV link or copied cells.</p>
+              </div>
+              <div class="space-y-2">
+                <div class="flex gap-1.5">
+                  <input type="url" id="googleSheetCsvUrl" placeholder="Google Sheets CSV link..."
+                    class="flex-1 px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500">
+                  <button type="button" onclick="fetchGoogleSheetRateChart()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs transition">
+                    Fetch
+                  </button>
+                </div>
+                <button type="button" onclick="openPasteMatrixModal()" class="w-full py-2 px-3 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-xl font-semibold text-xs transition flex items-center justify-center gap-1">
+                  <i class="fa-solid fa-paste text-amber-600"></i> Paste Copied Table
+                </button>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/70 flex flex-col justify-between space-y-2.5">
+              <div>
+                <h3 class="font-bold text-sm text-slate-800 flex items-center gap-2">
+                  <i class="fa-solid fa-calculator text-amber-600 text-base"></i>
+                  3. Auto-Generate Matrix
+                </h3>
+                <p class="text-[11px] text-slate-500 mt-0.5">Generate from Base Rate + 0.1 steps:</p>
+              </div>
+              <div class="grid grid-cols-3 gap-2 text-[11px]">
+                <div>
+                  <label class="font-bold text-slate-600 block">Base FAT</label>
+                  <input type="number" id="genBaseFat" inputmode="decimal" step="0.1" value="3.5" class="w-full px-2 py-1.5 bg-white border border-slate-300 rounded-lg text-center font-bold">
+                </div>
+                <div>
+                  <label class="font-bold text-slate-600 block">Base SNF</label>
+                  <input type="number" id="genBaseSnf" inputmode="decimal" step="0.1" value="8.5" class="w-full px-2 py-1.5 bg-white border border-slate-300 rounded-lg text-center font-bold">
+                </div>
+                <div>
+                  <label class="font-bold text-slate-600 block">Base ₹</label>
+                  <input type="number" id="genBaseRate" inputmode="decimal" step="0.1" value="35.0" class="w-full px-2 py-1.5 bg-white border border-slate-300 rounded-lg text-center font-bold">
+                </div>
+                <div>
+                  <label class="font-bold text-slate-600 block">+0.1 FAT</label>
+                  <input type="number" id="genFatStep" inputmode="decimal" step="0.05" value="0.30" class="w-full px-2 py-1.5 bg-white border border-slate-300 rounded-lg text-center font-bold">
+                </div>
+                <div>
+                  <label class="font-bold text-slate-600 block">+0.1 SNF</label>
+                  <input type="number" id="genSnfStep" inputmode="decimal" step="0.05" value="0.20" class="w-full px-2 py-1.5 bg-white border border-slate-300 rounded-lg text-center font-bold">
+                </div>
+                <div class="flex items-end">
+                  <button type="button" onclick="generateMatrixFromFormula()" class="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold transition">
+                    Generate
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div id="pasteMatrixModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/75 p-4">
+          <div class="bg-white rounded-2xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 class="font-bold text-base text-slate-800">Paste Rate Matrix</h3>
+              <button onclick="closePasteMatrixModal()" class="p-1 text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <p class="text-xs text-slate-500">Copy cells from Google Sheets or Excel (including SNF header row and FAT column) and paste below:</p>
+            <textarea id="pasteMatrixTextarea" rows="7" placeholder="FAT\SNF	8.0	8.1	8.2&#10;3.5	32.00	32.20	32.40&#10;3.6	32.30	32.50	32.70"
+              class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl font-mono text-xs focus:ring-2 focus:ring-indigo-500"></textarea>
+            <div class="flex justify-end gap-2">
+              <button onclick="closePasteMatrixModal()" class="px-4 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold">Cancel</button>
+              <button onclick="importPastedMatrix()" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold">Import Chart</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6">
+          <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-100">
+            <div>
+              <h3 id="activeRateChartHeading" class="font-bold text-sm sm:text-base text-slate-800">
+                Active Cow Milk Rate Chart (गाय दर पत्रक)
+              </h3>
+              <p class="text-xs text-slate-500">Tap any cell to edit rate directly.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span id="rateChartStatsBadge" class="px-2.5 py-1 bg-indigo-50 text-indigo-800 rounded-full text-[11px] font-bold">0 × 0</span>
+              <button onclick="exportCurrentRateChartExcel()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+                <i class="fa-solid fa-file-export text-emerald-600"></i> Export (.xlsx)
+              </button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto max-h-[420px] border border-slate-200 rounded-xl">
+            <table id="rateMatrixTable" class="w-full text-center text-xs border-collapse">
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ================= TAB 3: FARMERS MANAGEMENT ================= -->
+      <section id="viewFarmers" class="hidden space-y-5 sm:space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6">
+          
+          <div class="lg:col-span-1 bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6">
+            <div class="flex items-center justify-between pb-3.5 mb-4 border-b border-slate-100">
+              <h2 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
+                <span class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm">
+                  <i class="fa-solid fa-user-plus"></i>
+                </span>
+                Add / Register Farmer
+              </h2>
+            </div>
+
+            <form id="farmerForm" onsubmit="handleSaveFarmer(event)" class="space-y-4">
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Milk Type (दूध प्रकार) *</label>
+                <div class="grid grid-cols-2 gap-3">
+                  <label class="cursor-pointer">
+                    <input type="radio" name="farmerMilkType" value="Cow" checked class="peer sr-only">
+                    <div class="p-3 border-2 border-slate-200 rounded-xl text-center peer-checked:border-amber-500 peer-checked:bg-amber-50 peer-checked:text-amber-900 transition flex flex-col items-center gap-1">
+                      <i class="fa-solid fa-cow text-amber-600 text-lg"></i>
+                      <span class="text-xs font-extrabold">Cow (गाय)</span>
+                    </div>
+                  </label>
+                  <label class="cursor-pointer">
+                    <input type="radio" name="farmerMilkType" value="Buffalo" class="peer sr-only">
+                    <div class="p-3 border-2 border-slate-200 rounded-xl text-center peer-checked:border-slate-800 peer-checked:bg-slate-800 peer-checked:text-white transition flex flex-col items-center gap-1">
+                      <i class="fa-solid fa-hippo text-base"></i>
+                      <span class="text-xs font-extrabold">Buffalo (म्हैस)</span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Farmer ID / Code *</label>
+                <input type="text" id="farmerIdInput" inputmode="numeric" required placeholder="e.g. 101 or 1"
+                  class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 font-bold focus:ring-2 focus:ring-indigo-500">
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Farmer Full Name *</label>
+                <input type="text" id="farmerNameInput" required placeholder="e.g. Sobha Narayan Nangare"
+                  class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 font-medium focus:ring-2 focus:ring-indigo-500">
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Mobile Number</label>
+                <input type="tel" id="farmerPhoneInput" inputmode="tel" placeholder="e.g. 9420681567"
+                  class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 font-medium focus:ring-2 focus:ring-indigo-500">
+              </div>
+
+              <button type="submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-sm shadow transition flex items-center justify-center gap-2 mt-2">
+                <i class="fa-solid fa-floppy-disk"></i>
+                <span>Save Farmer</span>
+              </button>
+            </form>
+          </div>
+
+          <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6 flex flex-col">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3.5 mb-4 border-b border-slate-100 gap-3">
+              <div>
+                <h2 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
+                  <span class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center text-sm">
+                    <i class="fa-solid fa-address-book"></i>
+                  </span>
+                  Farmers Directory
+                </h2>
+              </div>
+
+              <div class="grid grid-cols-3 sm:flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+                <button id="filterFarmerAll" onclick="setFarmerTypeFilter('All')" class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow-sm transition text-center">
+                  All (<span id="countFarmerAll">0</span>)
+                </button>
+                <button id="filterFarmerCow" onclick="setFarmerTypeFilter('Cow')" class="px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 transition text-center">
+                  Cow (<span id="countFarmerCow">0</span>)
+                </button>
+                <button id="filterFarmerBuffalo" onclick="setFarmerTypeFilter('Buffalo')" class="px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 transition text-center">
+                  Buffalo (<span id="countFarmerBuffalo">0</span>)
+                </button>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <input type="text" id="farmerSearch" oninput="renderFarmersTable()" placeholder="Search by name, ID, or mobile..."
+                class="w-full sm:w-72 px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+            <div class="flex-1 overflow-x-auto min-h-[260px] -mx-4 px-4 sm:mx-0 sm:px-0">
+              <table class="w-full text-left text-xs border-collapse min-w-[480px]">
+                <thead>
+                  <tr class="bg-slate-50 text-slate-500 border-b border-slate-200 uppercase font-bold tracking-wider">
+                    <th class="py-3 px-2.5">ID</th>
+                    <th class="py-3 px-2.5">Farmer Name</th>
+                    <th class="py-3 px-2.5 text-center">Milk Type</th>
+                    <th class="py-3 px-2.5">Mobile No</th>
+                    <th class="py-3 px-2.5 text-right">Entries</th>
+                    <th class="py-3 px-2.5 text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="farmersTableBody" class="divide-y divide-slate-100 text-slate-700">
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ================= TAB 4: BILL GENERATOR & PRINT VIEW ================= -->
+      <section id="viewBill" class="hidden space-y-5 sm:space-y-6">
+        
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5 no-print space-y-4">
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 items-start">
+            
+            <!-- Farmer ID Input -->
+            <div class="col-span-1">
+              <label class="block text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Farmer ID *</label>
+              <input type="text" id="billFarmerId" inputmode="numeric" placeholder="ID (e.g. 1)" oninput="handleBillFarmerIdInput()"
+                class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 font-extrabold text-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <div id="billFarmerLookupBadge" class="mt-1 text-[11px] font-bold text-indigo-700 truncate">
+                Sobha Narayan Nangare
+              </div>
+            </div>
+
+            <!-- Billing Cycle -->
+            <div class="col-span-1">
+              <label class="block text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Cycle</label>
+              <select id="billCycleOption" onchange="handleCyclePresetChange()" class="w-full px-2.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 font-semibold focus:ring-2 focus:ring-indigo-500">
+                <option value="1-10">1st to 10th</option>
+                <option value="11-20">11th to 20th</option>
+                <option value="21-end">21st to End</option>
+                <option value="full">Full Month</option>
+                <option value="custom">Custom Range</option>
+              </select>
+            </div>
+
+            <!-- Bill Month -->
+            <div class="col-span-1" id="monthPickerWrapper">
+              <label class="block text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Bill Month</label>
+              <input type="month" id="billMonth" onchange="handleCyclePresetChange()" class="w-full px-2.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 font-medium focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+            <!-- Custom Date From/To -->
+            <div class="col-span-1 hidden" id="customDateFromWrapper">
+              <label class="block text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">From Date</label>
+              <input type="date" id="billFromDate" onchange="generateBill()" class="w-full px-2.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 font-medium">
+            </div>
+            
+            <div class="col-span-1 hidden" id="customDateToWrapper">
+              <label class="block text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">To Date</label>
+              <input type="date" id="billToDate" onchange="generateBill()" class="w-full px-2.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 font-medium">
+            </div>
+
+            <!-- Auto Rate From Rate Chart Display -->
+            <div class="col-span-1">
+              <label class="block text-[11px] sm:text-xs font-bold uppercase tracking-wider text-emerald-800 mb-1">Chart Rate / L</label>
+              <div id="billChartRateDisplay" class="w-full px-3 py-2 bg-emerald-50 border border-emerald-300 rounded-xl text-emerald-900 font-extrabold text-sm sm:text-base text-right">
+                ₹ 0.00
+              </div>
+              <div id="billRateSourceNote" class="mt-1 text-[10px] font-bold text-emerald-700 truncate">
+                Avg FAT & SNF
+              </div>
+            </div>
+
+            <!-- Print Single Bill Action -->
+            <div class="col-span-1 pt-0 lg:pt-[21px]">
+              <button onclick="printSingleBill()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white rounded-xl font-bold text-xs sm:text-sm shadow transition flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-print"></i>
+                <span>Print Bill</span>
+              </button>
+            </div>
+
+            <!-- WhatsApp Share Action -->
+            <div class="col-span-1 pt-0 lg:pt-[21px]">
+              <button id="btnShareWhatsApp" onclick="shareBillViaWhatsApp()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white rounded-xl font-bold text-xs sm:text-sm shadow transition flex items-center justify-center gap-1.5" title="व्हॉट्सॲपवर बिल पाठवा">
+                <i class="fa-brands fa-whatsapp text-base"></i>
+                <span>WhatsApp</span>
+              </button>
+            </div>
+
+          </div>
+
+          <!-- Batch Print Row: Print All Cow & Print All Buffalo -->
+          <div class="pt-3 border-t border-slate-100 grid grid-cols-2 gap-3">
+            <button onclick="printAllBillsByType('Cow')" class="py-2.5 px-3 bg-amber-500 hover:bg-amber-600 active:scale-[0.99] text-white rounded-xl font-bold text-xs sm:text-sm shadow-sm transition flex items-center justify-center gap-2">
+              <i class="fa-solid fa-cow"></i>
+              <span>Print All Cow (<span id="badgeCountCow">0</span>)</span>
+            </button>
+            <button onclick="printAllBillsByType('Buffalo')" class="py-2.5 px-3 bg-slate-800 hover:bg-slate-900 active:scale-[0.99] text-white rounded-xl font-bold text-xs sm:text-sm shadow-sm transition flex items-center justify-center gap-2">
+              <i class="fa-solid fa-hippo"></i>
+              <span>Print All Buffalo (<span id="badgeCountBuffalo">0</span>)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- EXACT PRINTABLE SINGLE BILL PAPER CANVAS -->
+        <div class="max-w-4xl mx-auto bg-white border border-slate-300 rounded-xl p-4 sm:p-8 shadow-md" id="printArea">
+          
+          <div class="text-center pb-3 sm:pb-4 mb-3 sm:mb-4 border-b-2 border-slate-800">
+            <h1 class="text-lg sm:text-3xl font-extrabold text-slate-900 tracking-tight leading-tight">
+              श्री सिद्धनाथ दूध संकलन केंद्र, नांगरेमळा
+            </h1>
+            <div class="inline-block mt-1.5 sm:mt-2 px-5 py-0.5 sm:py-1 bg-slate-900 text-white font-extrabold tracking-widest text-xs sm:text-sm uppercase rounded">
+              MILK BILL
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 pb-3 sm:pb-4 mb-3 sm:mb-4 text-xs sm:text-sm font-semibold border-b border-slate-300">
+            <div class="space-y-1">
+              <div><span class="text-slate-500">Farmer:</span> <span id="billPrintFarmer" class="text-slate-900 font-bold uppercase">Sobha Narayan Nangare</span></div>
+              <div>
+                <span class="text-slate-500">ID:</span> <span id="billPrintFarmerId" class="text-slate-900 font-bold">1</span>
+                <span class="mx-1.5 text-slate-300">|</span>
+                <span class="text-slate-500">Type:</span> <span id="billPrintMilkType" class="text-slate-900 font-extrabold">Cow (गाय)</span>
+              </div>
+              <div><span class="text-slate-500">Cycle:</span> <span id="billPrintRange" class="text-slate-800">01/10/2026 - 10/10/2026</span></div>
+            </div>
+            <div class="space-y-1 sm:text-right border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100">
+              <div><span class="text-slate-500">Center Mob:</span> <span class="text-slate-900 font-bold">9420681567</span></div>
+              <div><span class="text-slate-500">Farmer Mob:</span> <span id="billPrintFarmerPhone" class="text-slate-900 font-bold">-</span></div>
+              <div><span class="text-slate-500">Milk Rate:</span> <span id="billPrintRate" class="text-slate-900 font-bold">₹ 0.00 / Liter</span></div>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full border-collapse border border-slate-800 text-center text-[11px] sm:text-sm">
+              <thead>
+                <tr class="bg-slate-100 text-slate-900 font-bold">
+                  <th rowspan="2" class="border border-slate-700 py-2 px-1.5 w-[90px] sm:w-[110px]">Date</th>
+                  <th colspan="3" class="border border-slate-700 py-1 bg-amber-50">Morning</th>
+                  <th colspan="3" class="border border-slate-700 py-1 bg-indigo-50">Evening</th>
+                  <th rowspan="2" class="border border-slate-700 py-2 px-1.5 w-[70px] sm:w-[90px]">Total</th>
+                </tr>
+                <tr class="bg-slate-50 font-semibold text-slate-700">
+                  <th class="border border-slate-700 py-1 px-1">Liter</th>
+                  <th class="border border-slate-700 py-1 px-1">FAT</th>
+                  <th class="border border-slate-700 py-1 px-1">SNF</th>
+                  <th class="border border-slate-700 py-1 px-1">Liter</th>
+                  <th class="border border-slate-700 py-1 px-1">FAT</th>
+                  <th class="border border-slate-700 py-1 px-1">SNF</th>
+                </tr>
+              </thead>
+              <tbody id="billTableBody" class="font-medium text-slate-800">
+              </tbody>
+              <tfoot class="border-t-2 border-slate-900 font-bold text-slate-900 bg-slate-50">
+                <tr>
+                  <td class="border border-slate-700 py-1.5 px-1 text-center">TOTAL</td>
+                  <td class="border border-slate-700 py-1.5 px-1 text-right" id="ftTotalMorningL">-</td>
+                  <td class="border border-slate-700 py-1.5 px-1" id="ftAvgMorningFat">-</td>
+                  <td class="border border-slate-700 py-1.5 px-1" id="ftAvgMorningSnf">-</td>
+                  <td class="border border-slate-700 py-1.5 px-1 text-right" id="ftTotalEveningL">-</td>
+                  <td class="border border-slate-700 py-1.5 px-1" id="ftAvgEveningFat">-</td>
+                  <td class="border border-slate-700 py-1.5 px-1" id="ftAvgEveningSnf">-</td>
+                  <td class="border border-slate-700 py-1.5 px-1 text-right bg-slate-200" id="ftGrandMilk">-</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <div class="mt-5 sm:mt-6 border-2 border-slate-800 rounded-lg p-3.5 sm:p-4 bg-slate-50 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4">
+            <div class="grid grid-cols-3 gap-3 sm:gap-6 text-center sm:text-left">
+              <div>
+                <p class="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Milk</p>
+                <p class="text-base sm:text-xl font-extrabold text-slate-900" id="summaryTotalMilk">0.0 L</p>
+              </div>
+              <div>
+                <p class="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider">Avg FAT</p>
+                <p class="text-base sm:text-xl font-extrabold text-slate-900" id="summaryAvgFat">0.00</p>
+              </div>
+              <div>
+                <p class="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider">Avg SNF</p>
+                <p class="text-base sm:text-xl font-extrabold text-slate-900" id="summaryAvgSnf">0.00</p>
+              </div>
+            </div>
+            
+            <div class="border-t sm:border-t-0 sm:border-l border-slate-300 pt-3 sm:pt-0 sm:pl-6 text-center sm:text-right">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">निव्वळ देय रक्कम (Net Payable)</span>
+              <div class="text-2xl sm:text-3xl font-extrabold text-emerald-800" id="summaryTotalAmount">₹ 0</div>
+            </div>
+          </div>
+
+          <div class="mt-10 sm:mt-12 pt-4 flex justify-between items-end text-[11px] sm:text-sm font-semibold text-slate-700 gap-4">
+            <div class="text-center">
+              <div class="w-28 sm:w-36 border-b border-dashed border-slate-400 mb-1 mx-auto"></div>
+              <p>दूध उत्पादक स्वाक्षरी</p>
+            </div>
+            <div class="text-center">
+              <div class="w-28 sm:w-36 border-b border-dashed border-slate-400 mb-1 mx-auto"></div>
+              <p>अधिकृत स्वाक्षरी</p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- HIDDEN MULTI-PAGE BATCH PRINT CONTAINER -->
+        <div id="batchPrintArea" class="hidden bg-white"></div>
+
+      </section>
+
+      <!-- ================= TAB 5: COMPLETE ENTRIES DATABASE / MANAGER ================= -->
+      <section id="viewRecords" class="hidden space-y-4">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6">
+          <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-100">
+            <div>
+              <h2 class="text-base sm:text-lg font-bold text-slate-800">Registered Milk Collections</h2>
+              <p class="text-xs text-slate-500">Manage or delete individual shift entries</p>
+            </div>
+            <div>
+              <button onclick="clearAllData()" class="text-xs px-3 py-2 bg-rose-50 text-rose-700 font-bold rounded-xl border border-rose-200 hover:bg-rose-100 transition">
+                <i class="fa-solid fa-trash-can mr-1"></i> Clear All Data
+              </button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto mt-4 -mx-4 px-4 sm:mx-0 sm:px-0">
+            <table class="w-full text-left text-xs sm:text-sm border-collapse min-w-[580px]">
+              <thead>
+                <tr class="bg-slate-50 text-slate-500 border-b border-slate-200 text-xs font-bold uppercase">
+                  <th class="py-3 px-3">Date</th>
+                  <th class="py-3 px-3">Farmer Name</th>
+                  <th class="py-3 px-3 text-center">Type</th>
+                  <th class="py-3 px-3 text-center">Shift</th>
+                  <th class="py-3 px-3 text-right">Milk (L)</th>
+                  <th class="py-3 px-3 text-right">FAT</th>
+                  <th class="py-3 px-3 text-right">SNF</th>
+                  <th class="py-3 px-3 text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody id="allEntriesBody" class="divide-y divide-slate-100 text-slate-700">
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script>
+    // ================= GOOGLE APPS SCRIPT WEB APP URL =================
+    const GOOGLE_SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbxflW_HbL_E5cMdsVG20Nv5Oq4P3G1drPdxcLXtJNb3wpxPnr0Wo0GggKxKLGwNcXUL/exec';
+
+    // Authentication & Storage Keys
+    const STORAGE_KEY_AUTH = 'SHREE_SIDDHANATH_AUTH_SESSION_V2';
+    const STORAGE_KEY_ENTRIES = 'SHREE_SIDDHANATH_MILK_ENTRIES_V2';
+    const STORAGE_KEY_FARMERS = 'SHREE_SIDDHANATH_FARMERS_V2';
+    const STORAGE_KEY_RATE_CHARTS = 'SHREE_SIDDHANATH_RATE_CHARTS_V1';
+
+    // System Credentials
+    const VALID_USERS = [
+      { user: 'admin', pass: 'sidhnath123' },
+      { user: '9420681567', pass: 'sidhnath123' }
+    ];
+
+    const DEFAULT_FARMERS = [
+      { id: "1", name: "Sobha Narayan Nangare", phone: "9420681567", milkType: "Cow" },
+      { id: "2", name: "Santosh Baburao Nangare", phone: "9822000000", milkType: "Buffalo" },
+      { id: "3", name: "Ramesh Dinkar Patil", phone: "9730000000", milkType: "Cow" }
+    ];
+
+    function buildDefaultMatrix(minFat, maxFat, minSnf, maxSnf, baseFat, baseSnf, baseRate, fatStep, snfStep) {
+      const fats = [];
+      for (let f = Math.round(minFat * 10); f <= Math.round(maxFat * 10); f++) {
+        fats.push((f / 10).toFixed(1));
+      }
+      const snfs = [];
+      for (let s = Math.round(minSnf * 10); s <= Math.round(maxSnf * 10); s++) {
+        snfs.push((s / 10).toFixed(1));
+      }
+      const rates = {};
+      fats.forEach(fStr => {
+        rates[fStr] = {};
+        const fVal = parseFloat(fStr);
+        snfs.forEach(sStr => {
+          const sVal = parseFloat(sStr);
+          const diffF = Math.round((fVal - baseFat) * 10);
+          const diffS = Math.round((sVal - baseSnf) * 10);
+          const val = Math.max(0, baseRate + diffF * fatStep + diffS * snfStep);
+          rates[fStr][sStr] = Number(val.toFixed(2));
+        });
+      });
+      return { fats, snfs, rates };
+    }
+
+    let rateCharts = JSON.parse(localStorage.getItem(STORAGE_KEY_RATE_CHARTS)) || {
+      Cow: buildDefaultMatrix(3.0, 5.5, 7.8, 9.2, 3.5, 8.5, 35.0, 0.30, 0.20),
+      Buffalo: buildDefaultMatrix(5.0, 9.0, 8.2, 9.6, 6.0, 9.0, 52.0, 0.50, 0.30)
+    };
+
+    let activeRateChartTab = 'Cow';
+
+    let farmers = JSON.parse(localStorage.getItem(STORAGE_KEY_FARMERS)) || DEFAULT_FARMERS;
+    farmers = farmers.map(f => ({ ...f, milkType: f.milkType || 'Cow' }));
+
+    let entries = JSON.parse(localStorage.getItem(STORAGE_KEY_ENTRIES) || '[]');
+    let currentFarmerTypeFilter = 'All';
+    let toastTimeout = null;
+
+    // ================= GOOGLE SHEETS SYNC ENGINE =================
+    function setSyncBadge(state) {
+      const icon = document.getElementById('syncIcon');
+      const text = document.getElementById('syncText');
+      if (!icon || !text) return;
+
+      if (state === 'syncing') {
+        icon.className = 'fa-solid fa-arrows-rotate fa-spin text-amber-300';
+        text.textContent = 'Syncing...';
+      } else if (state === 'offline') {
+        icon.className = 'fa-solid fa-cloud-slash text-rose-300';
+        text.textContent = 'Local Only';
+      } else {
+        icon.className = 'fa-solid fa-cloud-check text-emerald-300';
+        text.textContent = 'Synced';
+      }
+    }
+
+    function isSheetsConfigured() {
+      return GOOGLE_SHEETS_API_URL && GOOGLE_SHEETS_API_URL.startsWith('https://script.google.com/');
+    }
+
+    async function pushToGoogleSheets() {
+      if (!isSheetsConfigured()) {
+        setSyncBadge('offline');
+        return;
+      }
+
+      setSyncBadge('syncing');
+      try {
+        await fetch(GOOGLE_SHEETS_API_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            action: 'syncAll',
+            farmers: farmers,
+            entries: entries,
+            rateCharts: rateCharts
+          })
+        });
+        setSyncBadge('synced');
+      } catch (err) {
+        setSyncBadge('offline');
+      }
+    }
+
+    async function pullFromGoogleSheets(notifyUser = false) {
+      if (!isSheetsConfigured()) {
+        setSyncBadge('offline');
+        if (notifyUser) {
+          showToast('Configure Apps Script URL first to sync with Sheets', 'error');
+        }
+        return;
+      }
+
+      setSyncBadge('syncing');
+      try {
+        const res = await fetch(`${GOOGLE_SHEETS_API_URL}?action=getAll`);
+        const data = await res.json();
+
+        if (data && data.status === 'success') {
+          if (Array.isArray(data.farmers) && data.farmers.length > 0) {
+            farmers = data.farmers.map(f => ({ ...f, milkType: f.milkType || 'Cow' }));
+            localStorage.setItem(STORAGE_KEY_FARMERS, JSON.stringify(farmers));
+          }
+          if (Array.isArray(data.entries)) {
+            entries = data.entries;
+            localStorage.setItem(STORAGE_KEY_ENTRIES, JSON.stringify(entries));
+          }
+          if (data.rateCharts && (data.rateCharts.Cow || data.rateCharts.Buffalo)) {
+            if (data.rateCharts.Cow) rateCharts.Cow = data.rateCharts.Cow;
+            if (data.rateCharts.Buffalo) rateCharts.Buffalo = data.rateCharts.Buffalo;
+            localStorage.setItem(STORAGE_KEY_RATE_CHARTS, JSON.stringify(rateCharts));
+          }
+
+          renderFarmerSelects();
+          renderFarmersTable();
+          renderRateMatrixTable();
+          renderQuickEntries();
+          renderAllEntries();
+          updateBatchPrintCounts();
+          if (!document.getElementById('viewBill').classList.contains('hidden')) {
+            handleBillFarmerIdInput();
+          }
+
+          setSyncBadge('synced');
+          if (notifyUser) showToast('Synced with Google Sheets!');
+        } else {
+          setSyncBadge('offline');
+        }
+      } catch (err) {
+        setSyncBadge('offline');
+        if (notifyUser) showToast('Could not reach Google Sheets', 'error');
+      }
+    }
+
+    // Application Lifecycle
+    window.addEventListener('DOMContentLoaded', () => {
+      checkAuthStatus();
+    });
+
+    window.addEventListener('afterprint', () => {
+      document.body.classList.remove('batch-print-mode');
+      const batchArea = document.getElementById('batchPrintArea');
+      if (batchArea) {
+        batchArea.classList.add('hidden');
+        batchArea.innerHTML = '';
+      }
+    });
+
+    function checkAuthStatus() {
+      const isAuth = localStorage.getItem(STORAGE_KEY_AUTH);
+      const loginOverlay = document.getElementById('loginOverlay');
+      const appContainer = document.getElementById('appContainer');
+
+      if (isAuth === 'true') {
+        loginOverlay.classList.add('hidden');
+        appContainer.classList.remove('hidden');
+        initializeApp();
+      } else {
+        loginOverlay.classList.remove('hidden');
+        appContainer.classList.add('hidden');
+      }
+    }
+
+    function handleLogin(e) {
+      e.preventDefault();
+      const u = document.getElementById('loginUsername').value.trim();
+      const p = document.getElementById('loginPassword').value.trim();
+
+      const matched = VALID_USERS.find(acc => acc.user.toLowerCase() === u.toLowerCase() && acc.pass === p);
+
+      if (matched) {
+        localStorage.setItem(STORAGE_KEY_AUTH, 'true');
+        showToast('Login यशस्वी झाले!');
+        checkAuthStatus();
+      } else {
+        showToast('चुकीचे Username किंवा Password!', 'error');
+      }
+    }
+
+    function handleLogout() {
+      if (confirm('तुम्हाला नक्की Logout करायचे आहे का?')) {
+        localStorage.removeItem(STORAGE_KEY_AUTH);
+        document.getElementById('loginUsername').value = '';
+        document.getElementById('loginPassword').value = '';
+        checkAuthStatus();
+        showToast('Logged out successfully');
+      }
+    }
+
+    function togglePasswordVisibility() {
+      const passInput = document.getElementById('loginPassword');
+      const icon = document.getElementById('togglePassIcon');
+      if (passInput.type === 'password') {
+        passInput.type = 'text';
+        icon.className = 'fa-solid fa-eye-slash';
+      } else {
+        passInput.type = 'password';
+        icon.className = 'fa-solid fa-eye';
+      }
+    }
+
+    function initializeApp() {
+      const now = new Date();
+      const localDate = now.toISOString().split('T')[0];
+      document.getElementById('entryDate').value = localDate;
+      
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      document.getElementById('billMonth').value = `${yyyy}-${mm}`;
+
+      if (farmers.length > 0 && !document.getElementById('billFarmerId').value) {
+        document.getElementById('billFarmerId').value = farmers[0].id;
+      }
+      
+      renderFarmerSelects();
+      renderFarmersTable();
+      renderRateMatrixTable();
+      renderQuickEntries();
+      updateBatchPrintCounts();
+      handleCyclePresetChange();
+      updateEntryMilkTypeBadge();
+      pullFromGoogleSheets(false);
+      focusFarmerInput();
+    }
+
+    function focusFarmerInput() {
+      const idInput = document.getElementById('entryFarmerId');
+      if (!idInput) return;
+      idInput.focus();
+      try {
+        idInput.setSelectionRange(0, idInput.value.length);
+      } catch (err) {
+        idInput.select();
+      }
+    }
+
+    function focusFarmerManagementInput() {
+      const idInput = document.getElementById('farmerIdInput');
+      if (!idInput) return;
+      idInput.focus();
+      try {
+        idInput.setSelectionRange(0, idInput.value.length);
+      } catch (err) {
+        idInput.select();
+      }
+    }
+
+    function formatMilkTypeLabel(type) {
+      return type === 'Buffalo' ? 'Buffalo (म्हैस)' : 'Cow (गाय)';
+    }
+
+    function renderMilkTypeBadgeHTML(type) {
+      if (type === 'Buffalo') {
+        return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-800 text-white">Buffalo</span>`;
+      }
+      return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800">Cow</span>`;
+    }
+
+    function updateEntryMilkTypeBadge() {
+      const farmerId = document.getElementById('entryFarmerSelect').value;
+      const badge = document.getElementById('entryMilkTypeBadge');
+      const f = farmers.find(item => item.id === farmerId);
+      const mType = f ? (f.milkType || 'Cow') : 'Cow';
+
+      if (mType === 'Buffalo') {
+        badge.textContent = 'Buffalo (म्हैस)';
+        badge.className = 'text-xs font-extrabold px-2.5 py-1 bg-slate-800 text-white rounded-full';
+      } else {
+        badge.textContent = 'Cow (गाय)';
+        badge.className = 'text-xs font-extrabold px-2.5 py-1 bg-amber-100 text-amber-800 rounded-full';
+      }
+      updateLiveEntryRatePreview();
+    }
+
+    // ================= RATE CHART MATRIX LOOKUP ENGINE =================
+    function lookupRateFromChart(milkType, fat, snf) {
+      const chart = rateCharts[milkType] || rateCharts.Cow;
+      if (!chart || !chart.fats || !chart.fats.length || !chart.snfs || !chart.snfs.length) {
+        return 0;
+      }
+
+      const fKey = Number(fat).toFixed(1);
+      const sKey = Number(snf).toFixed(1);
+
+      if (chart.rates[fKey] && chart.rates[fKey][sKey] !== undefined) {
+        return Number(chart.rates[fKey][sKey]);
+      }
+
+      const closestFat = chart.fats.reduce((prev, curr) =>
+        Math.abs(parseFloat(curr) - fat) < Math.abs(parseFloat(prev) - fat) ? curr : prev
+      );
+      const closestSnf = chart.snfs.reduce((prev, curr) =>
+        Math.abs(parseFloat(curr) - snf) < Math.abs(parseFloat(prev) - snf) ? curr : prev
+      );
+
+      if (chart.rates[closestFat] && chart.rates[closestFat][closestSnf] !== undefined) {
+        return Number(chart.rates[closestFat][closestSnf]);
+      }
+      return 0;
+    }
+
+    function updateLiveEntryRatePreview() {
+      const farmerId = document.getElementById('entryFarmerSelect').value;
+      const fObj = farmers.find(f => f.id === farmerId);
+      const mType = fObj ? (fObj.milkType || 'Cow') : 'Cow';
+
+      const liter = parseFloat(document.getElementById('entryLiter').value) || 0;
+      const fat = parseFloat(document.getElementById('entryFat').value) || 0;
+      const snf = parseFloat(document.getElementById('entrySnf').value) || 0;
+
+      const rateEl = document.getElementById('previewChartRate');
+      const amtEl = document.getElementById('previewChartAmount');
+
+      if (fat > 0 && snf > 0) {
+        const rate = lookupRateFromChart(mType, fat, snf);
+        rateEl.textContent = `₹ ${rate.toFixed(2)} / L`;
+        amtEl.textContent = `₹ ${(liter * rate).toFixed(2)}`;
+        return;
+      }
+      rateEl.textContent = '₹ 0.00 / L';
+      amtEl.textContent = '₹ 0.00';
+    }
+
+    // ================= RATE CHART MANAGEMENT UI & EXCEL / SHEETS UPLOAD =================
+    function switchRateChartType(type) {
+      activeRateChartTab = type;
+      const btnCow = document.getElementById('rateTabCow');
+      const btnBuf = document.getElementById('rateTabBuffalo');
+      const heading = document.getElementById('activeRateChartHeading');
+
+      if (type === 'Cow') {
+        btnCow.className = "px-3 py-2 rounded-lg text-xs sm:text-sm font-extrabold bg-amber-500 text-white shadow-sm transition flex items-center justify-center gap-1.5";
+        btnBuf.className = "px-3 py-2 rounded-lg text-xs sm:text-sm font-extrabold text-slate-700 hover:text-slate-900 transition flex items-center justify-center gap-1.5";
+        heading.textContent = "Active Cow Milk Rate Chart (गाय दर पत्रक)";
+        document.getElementById('genBaseFat').value = "3.5";
+        document.getElementById('genBaseSnf').value = "8.5";
+        document.getElementById('genBaseRate').value = "35.0";
+      } else {
+        btnBuf.className = "px-3 py-2 rounded-lg text-xs sm:text-sm font-extrabold bg-slate-800 text-white shadow-sm transition flex items-center justify-center gap-1.5";
+        btnCow.className = "px-3 py-2 rounded-lg text-xs sm:text-sm font-extrabold text-slate-700 hover:text-slate-900 transition flex items-center justify-center gap-1.5";
+        heading.textContent = "Active Buffalo Milk Rate Chart (म्हैस दर पत्रक)";
+        document.getElementById('genBaseFat').value = "6.0";
+        document.getElementById('genBaseSnf').value = "9.0";
+        document.getElementById('genBaseRate').value = "52.0";
+      }
+
+      renderRateMatrixTable();
+    }
+
+    function renderRateMatrixTable() {
+      const chart = rateCharts[activeRateChartTab];
+      const table = document.getElementById('rateMatrixTable');
+      const statsBadge = document.getElementById('rateChartStatsBadge');
+      table.innerHTML = '';
+
+      if (!chart || !chart.fats.length || !chart.snfs.length) {
+        statsBadge.textContent = '0 × 0';
+        table.innerHTML = `<tr><td class="p-6 text-slate-400">No rate chart configured. Upload an Excel file or click Generate.</td></tr>`;
+        return;
+      }
+
+      statsBadge.textContent = `${chart.fats.length} FAT × ${chart.snfs.length} SNF`;
+
+      const thead = document.createElement('thead');
+      let headerHTML = `<tr class="bg-indigo-950 text-white font-bold sticky top-0 z-10">
+        <th class="py-2 px-2.5 border border-indigo-800 bg-indigo-900 sticky left-0 z-20">FAT\\SNF</th>`;
+      chart.snfs.forEach(s => {
+        headerHTML += `<th class="py-2 px-2 border border-indigo-800 min-w-[58px]">${s}</th>`;
+      });
+      headerHTML += `</tr>`;
+      thead.innerHTML = headerHTML;
+      table.appendChild(thead);
+
+      const tbody = document.createElement('tbody');
+      tbody.className = "divide-y divide-slate-200";
+
+      chart.fats.forEach(f => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-amber-50/40";
+        let rowHTML = `<td class="py-1.5 px-2.5 font-extrabold bg-slate-100 text-slate-900 border border-slate-300 sticky left-0">${f}</td>`;
+        chart.snfs.forEach(s => {
+          const val = (chart.rates[f] && chart.rates[f][s] !== undefined) ? chart.rates[f][s] : '';
+          rowHTML += `<td class="p-0.5 border border-slate-200">
+            <input type="number" inputmode="decimal" step="0.01" value="${val}"
+              onchange="updateRateCell('${f}', '${s}', this.value)"
+              class="w-full py-1.5 px-1 text-center font-semibold text-slate-800 bg-transparent focus:bg-amber-100 focus:outline-none rounded text-xs">
+          </td>`;
+        });
+        tr.innerHTML = rowHTML;
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+    }
+
+    function updateRateCell(fatKey, snfKey, newVal) {
+      const parsed = parseFloat(newVal);
+      if (isNaN(parsed)) return;
+      if (!rateCharts[activeRateChartTab].rates[fatKey]) {
+        rateCharts[activeRateChartTab].rates[fatKey] = {};
+      }
+      rateCharts[activeRateChartTab].rates[fatKey][snfKey] = Number(parsed.toFixed(2));
+      localStorage.setItem(STORAGE_KEY_RATE_CHARTS, JSON.stringify(rateCharts));
+      pushToGoogleSheets();
+      showToast(`Updated ${activeRateChartTab} rate for FAT ${fatKey} / SNF ${snfKey}`);
+    }
+
+    function generateMatrixFromFormula() {
+      const baseFat = parseFloat(document.getElementById('genBaseFat').value) || 3.5;
+      const baseSnf = parseFloat(document.getElementById('genBaseSnf').value) || 8.5;
+      const baseRate = parseFloat(document.getElementById('genBaseRate').value) || 35.0;
+      const fatStep = parseFloat(document.getElementById('genFatStep').value) || 0.30;
+      const snfStep = parseFloat(document.getElementById('genSnfStep').value) || 0.20;
+
+      if (activeRateChartTab === 'Cow') {
+        rateCharts.Cow = buildDefaultMatrix(3.0, 5.5, 7.8, 9.2, baseFat, baseSnf, baseRate, fatStep, snfStep);
+      } else {
+        rateCharts.Buffalo = buildDefaultMatrix(5.0, 9.0, 8.2, 9.6, baseFat, baseSnf, baseRate, fatStep, snfStep);
+      }
+
+      localStorage.setItem(STORAGE_KEY_RATE_CHARTS, JSON.stringify(rateCharts));
+      pushToGoogleSheets();
+      renderRateMatrixTable();
+      showToast(`${activeRateChartTab} rate chart generated!`);
+    }
+
+    function parse2DGridToRateChart(grid) {
+      const cleanRows = grid.filter(row => Array.isArray(row) && row.some(cell => String(cell ?? '').trim() !== ''));
+      if (cleanRows.length < 2) return null;
+
+      const headerRow = cleanRows[0];
+      const snfs = [];
+      const snfColIndices = [];
+
+      for (let c = 1; c < headerRow.length; c++) {
+        const num = parseFloat(String(headerRow[c]).replace(/[^0-9.]/g, ''));
+        if (!isNaN(num) && num > 0) {
+          snfs.push(num.toFixed(1));
+          snfColIndices.push(c);
+        }
+      }
+
+      if (!snfs.length) return null;
+
+      const fats = [];
+      const rates = {};
+
+      for (let r = 1; r < cleanRows.length; r++) {
+        const row = cleanRows[r];
+        const fatNum = parseFloat(String(row[0]).replace(/[^0-9.]/g, ''));
+        if (isNaN(fatNum) || fatNum <= 0) continue;
+
+        const fKey = fatNum.toFixed(1);
+        fats.push(fKey);
+        rates[fKey] = {};
+
+        snfColIndices.forEach((colIdx, idx) => {
+          const sKey = snfs[idx];
+          const rateNum = parseFloat(String(row[colIdx] ?? '').replace(/[^0-9.]/g, ''));
+          if (!isNaN(rateNum)) {
+            rates[fKey][sKey] = Number(rateNum.toFixed(2));
+          }
+        });
+      }
+
+      if (!fats.length) return null;
+      return { fats, snfs, rates };
+    }
+
+    function handleExcelRateUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const grid = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+
+          const parsed = parse2DGridToRateChart(grid);
+          if (!parsed) {
+            showToast('Invalid Excel format! Ensure Row 1 has SNF values and Col A has FAT values.', 'error');
+            return;
+          }
+
+          rateCharts[activeRateChartTab] = parsed;
+          localStorage.setItem(STORAGE_KEY_RATE_CHARTS, JSON.stringify(rateCharts));
+          pushToGoogleSheets();
+          renderRateMatrixTable();
+          showToast(`Imported ${activeRateChartTab} rate chart from "${file.name}"!`);
+        } catch (err) {
+          showToast('Failed to parse spreadsheet file.', 'error');
+        } finally {
+          event.target.value = '';
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function downloadSampleRateExcel() {
+      const chart = rateCharts[activeRateChartTab];
+      const aoa = [['FAT / SNF', ...chart.snfs]];
+      chart.fats.forEach(f => {
+        const row = [parseFloat(f)];
+        chart.snfs.forEach(s => {
+          row.push(chart.rates[f]?.[s] ?? 0);
+        });
+        aoa.push(row);
+      });
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(aoa);
+      XLSX.utils.book_append_sheet(wb, ws, `${activeRateChartTab}_Rates`);
+      XLSX.writeFile(wb, `${activeRateChartTab}_Milk_Rate_Chart.xlsx`);
+      showToast(`Downloaded ${activeRateChartTab} Excel template!`);
+    }
+
+    function exportCurrentRateChartExcel() {
+      downloadSampleRateExcel();
+    }
+
+    async function fetchGoogleSheetRateChart() {
+      const urlInput = document.getElementById('googleSheetCsvUrl');
+      const url = urlInput.value.trim();
+      if (!url) {
+        showToast('Please enter a published Google Sheets CSV URL', 'error');
+        return;
+      }
+
+      try {
+        showToast('Fetching Google Sheet...');
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Network error');
+        const csvText = await response.text();
+        const workbook = XLSX.read(csvText, { type: 'string' });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const grid = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+
+        const parsed = parse2DGridToRateChart(grid);
+        if (!parsed) {
+          showToast('Could not parse FAT × SNF matrix from Google Sheet.', 'error');
+          return;
+        }
+
+        rateCharts[activeRateChartTab] = parsed;
+        localStorage.setItem(STORAGE_KEY_RATE_CHARTS, JSON.stringify(rateCharts));
+        pushToGoogleSheets();
+        renderRateMatrixTable();
+        showToast(`Imported ${activeRateChartTab} chart from Google Sheets!`);
+      } catch (err) {
+        showToast('Unable to fetch URL. Ensure sheet is published as CSV or use Paste option.', 'error');
+      }
+    }
+
+    function openPasteMatrixModal() {
+      document.getElementById('pasteMatrixModal').classList.remove('hidden');
+      document.getElementById('pasteMatrixTextarea').focus();
+    }
+
+    function closePasteMatrixModal() {
+      document.getElementById('pasteMatrixModal').classList.add('hidden');
+    }
+
+    function importPastedMatrix() {
+      const raw = document.getElementById('pasteMatrixTextarea').value.trim();
+      if (!raw) {
+        showToast('Please paste table cells first', 'error');
+        return;
+      }
+
+      const lines = raw.split(/\r?\n/).filter(l => l.trim() !== '');
+      const grid = lines.map(line => line.includes('\t') ? line.split('\t') : line.split(','));
+
+      const parsed = parse2DGridToRateChart(grid);
+      if (!parsed) {
+        showToast('Invalid pasted matrix! Ensure first row is SNF and first column is FAT.', 'error');
+        return;
+      }
+
+      rateCharts[activeRateChartTab] = parsed;
+      localStorage.setItem(STORAGE_KEY_RATE_CHARTS, JSON.stringify(rateCharts));
+      pushToGoogleSheets();
+      renderRateMatrixTable();
+      closePasteMatrixModal();
+      document.getElementById('pasteMatrixTextarea').value = '';
+      showToast(`Imported ${activeRateChartTab} rate chart from pasted data!`);
+    }
+
+    // Tab switcher
+    function switchTab(tabId) {
+      document.getElementById('viewEntry').classList.add('hidden');
+      document.getElementById('viewRates').classList.add('hidden');
+      document.getElementById('viewFarmers').classList.add('hidden');
+      document.getElementById('viewBill').classList.add('hidden');
+      document.getElementById('viewRecords').classList.add('hidden');
+
+      const tabs = [
+        { id: 'entry', btn: 'tabBtnEntry', mobBtn: 'mobTabBtnEntry', el: 'viewEntry' },
+        { id: 'rates', btn: 'tabBtnRates', mobBtn: 'mobTabBtnRates', el: 'viewRates' },
+        { id: 'farmers', btn: 'tabBtnFarmers', mobBtn: 'mobTabBtnFarmers', el: 'viewFarmers' },
+        { id: 'bill', btn: 'tabBtnBill', mobBtn: 'mobTabBtnBill', el: 'viewBill' },
+        { id: 'records', btn: 'tabBtnRecords', mobBtn: 'mobTabBtnRecords', el: 'viewRecords' },
+      ];
+
+      tabs.forEach(t => {
+        const btn = document.getElementById(t.btn);
+        const mobBtn = document.getElementById(t.mobBtn);
+        if (t.id === tabId) {
+          if (btn) btn.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all bg-indigo-600 text-white shadow-sm";
+          if (mobBtn) mobBtn.className = "flex flex-col items-center justify-center gap-1 text-amber-400 font-bold transition-colors";
+          document.getElementById(t.el).classList.remove('hidden');
+        } else {
+          if (btn) btn.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-indigo-200 hover:text-white transition-all";
+          if (mobBtn) mobBtn.className = "flex flex-col items-center justify-center gap-1 text-indigo-300 hover:text-white font-medium transition-colors";
+        }
+      });
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      if (tabId === 'entry') {
+        focusFarmerInput();
+      } else if (tabId === 'rates') {
+        renderRateMatrixTable();
+      } else if (tabId === 'bill') {
+        updateBatchPrintCounts();
+        const billIdInput = document.getElementById('billFarmerId');
+        if (!billIdInput.value && farmers.length > 0) {
+          billIdInput.value = farmers[0].id;
+        }
+        handleBillFarmerIdInput();
+        setTimeout(() => {
+          billIdInput.focus();
+          try {
+            billIdInput.setSelectionRange(0, billIdInput.value.length);
+          } catch (err) {
+            billIdInput.select();
+          }
+        }, 50);
+      } else if (tabId === 'records') {
+        renderAllEntries();
+      } else if (tabId === 'farmers') {
+        renderFarmersTable();
+        focusFarmerManagementInput();
+      }
+    }
+
+    // ================= BILLING FARMER ID DIRECT FETCH HANDLER =================
+    function getBillFarmerObject() {
+      const idVal = document.getElementById('billFarmerId').value.trim();
+      if (!idVal) return null;
+      return farmers.find(f => f.id.toLowerCase() === idVal.toLowerCase()) || null;
+    }
+
+    function handleBillFarmerIdInput() {
+      const idVal = document.getElementById('billFarmerId').value.trim();
+      const lookupBadge = document.getElementById('billFarmerLookupBadge');
+
+      if (!idVal) {
+        lookupBadge.textContent = 'Enter Farmer ID';
+        lookupBadge.className = 'mt-1 text-[11px] font-bold text-slate-400 truncate';
+        generateBill();
+        return;
+      }
+
+      const farmerObj = getBillFarmerObject();
+
+      if (!farmerObj) {
+        lookupBadge.textContent = `ID "${idVal}" Not Found`;
+        lookupBadge.className = 'mt-1 text-[11px] font-bold text-rose-600 truncate';
+        generateBill();
+        return;
+      }
+
+      const mType = farmerObj.milkType || 'Cow';
+      lookupBadge.textContent = `${farmerObj.name} [${mType === 'Buffalo' ? 'म्हैस' : 'गाय'}]`;
+      lookupBadge.className = 'mt-1 text-[11px] font-extrabold text-emerald-700 truncate';
+
+      generateBill();
+    }
+
+    function getActiveCycleRange() {
+      const cycleOption = document.getElementById('billCycleOption').value;
+      let startDate, endDate;
+
+      if (cycleOption === 'custom') {
+        const fromStr = document.getElementById('billFromDate').value;
+        const toStr = document.getElementById('billToDate').value;
+        if (!fromStr || !toStr) return null;
+        startDate = new Date(fromStr + 'T00:00:00');
+        endDate = new Date(toStr + 'T23:59:59');
+      } else {
+        const monthVal = document.getElementById('billMonth').value;
+        if (!monthVal) return null;
+        const [year, month] = monthVal.split('-').map(Number);
+        const lastDay = new Date(year, month, 0).getDate();
+
+        if (cycleOption === '1-10') {
+          startDate = new Date(year, month - 1, 1, 0, 0, 0);
+          endDate = new Date(year, month - 1, 10, 23, 59, 59);
+        } else if (cycleOption === '11-20') {
+          startDate = new Date(year, month - 1, 11, 0, 0, 0);
+          endDate = new Date(year, month - 1, 20, 23, 59, 59);
+        } else if (cycleOption === '21-end') {
+          startDate = new Date(year, month - 1, 21, 0, 0, 0);
+          endDate = new Date(year, month - 1, lastDay, 23, 59, 59);
+        } else if (cycleOption === 'full') {
+          startDate = new Date(year, month - 1, 1, 0, 0, 0);
+          endDate = new Date(year, month - 1, lastDay, 23, 59, 59);
+        }
+      }
+      return { startDate, endDate };
+    }
+
+    function updateBatchPrintCounts() {
+      const cowCount = farmers.filter(f => (f.milkType || 'Cow') === 'Cow').length;
+      const buffaloCount = farmers.filter(f => f.milkType === 'Buffalo').length;
+      const cowEl = document.getElementById('badgeCountCow');
+      const bufEl = document.getElementById('badgeCountBuffalo');
+      if (cowEl) cowEl.textContent = cowCount;
+      if (bufEl) bufEl.textContent = buffaloCount;
+    }
+
+    // ================= FARMER MANAGEMENT =================
+    function setFarmerTypeFilter(filterType) {
+      currentFarmerTypeFilter = filterType;
+      const btns = {
+        All: document.getElementById('filterFarmerAll'),
+        Cow: document.getElementById('filterFarmerCow'),
+        Buffalo: document.getElementById('filterFarmerBuffalo')
+      };
+
+      Object.keys(btns).forEach(key => {
+        if (key === filterType) {
+          btns[key].className = "px-2.5 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow-sm transition text-center";
+        } else {
+          btns[key].className = "px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 transition text-center";
+        }
+      });
+
+      renderFarmersTable();
+    }
+
+    function handleSaveFarmer(e) {
+      e.preventDefault();
+      const id = document.getElementById('farmerIdInput').value.trim();
+      const name = document.getElementById('farmerNameInput').value.trim();
+      const phone = document.getElementById('farmerPhoneInput').value.trim();
+      const milkType = document.querySelector('input[name="farmerMilkType"]:checked').value;
+
+      if (!id || !name) {
+        showToast('Please enter both Farmer ID and Name', 'error');
+        focusFarmerManagementInput();
+        return;
+      }
+
+      const existingIndex = farmers.findIndex(f => f.id.toLowerCase() === id.toLowerCase());
+
+      if (existingIndex >= 0) {
+        const existingFarmer = farmers[existingIndex];
+        const confirmReplace = confirm(
+          `Farmer ID "${id}" is already assigned to "${existingFarmer.name}" (${formatMilkTypeLabel(existingFarmer.milkType)}).\n\n` +
+          `Do you want to replace / update this farmer's details?`
+        );
+
+        if (!confirmReplace) {
+          showToast('Update cancelled', 'error');
+          focusFarmerManagementInput();
+          return;
+        }
+
+        farmers[existingIndex] = { id, name, phone, milkType };
+
+        entries.forEach(entry => {
+          if (entry.farmerId && entry.farmerId.toLowerCase() === id.toLowerCase()) {
+            entry.farmer = name;
+            entry.milkType = milkType;
+          }
+        });
+        localStorage.setItem(STORAGE_KEY_ENTRIES, JSON.stringify(entries));
+
+        showToast(`Farmer ID ${id} updated (${formatMilkTypeLabel(milkType)})!`);
+      } else {
+        farmers.push({ id, name, phone, milkType });
+        showToast(`${name} (${formatMilkTypeLabel(milkType)}) registered!`);
+      }
+
+      localStorage.setItem(STORAGE_KEY_FARMERS, JSON.stringify(farmers));
+      pushToGoogleSheets();
+
+      document.getElementById('farmerIdInput').value = '';
+      document.getElementById('farmerNameInput').value = '';
+      document.getElementById('farmerPhoneInput').value = '';
+
+      renderFarmersTable();
+      renderFarmerSelects();
+      renderQuickEntries();
+      updateBatchPrintCounts();
+      updateEntryMilkTypeBadge();
+
+      focusFarmerManagementInput();
+    }
+
+    function renderFarmersTable() {
+      const tbody = document.getElementById('farmersTableBody');
+      const searchInput = document.getElementById('farmerSearch');
+      const filter = searchInput ? searchInput.value.toLowerCase().trim() : '';
+      tbody.innerHTML = '';
+
+      const cowCount = farmers.filter(f => (f.milkType || 'Cow') === 'Cow').length;
+      const buffaloCount = farmers.filter(f => f.milkType === 'Buffalo').length;
+      document.getElementById('countFarmerAll').textContent = farmers.length;
+      document.getElementById('countFarmerCow').textContent = cowCount;
+      document.getElementById('countFarmerBuffalo').textContent = buffaloCount;
+
+      const filtered = farmers.filter(f => {
+        const mType = f.milkType || 'Cow';
+        const matchesType = currentFarmerTypeFilter === 'All' || mType === currentFarmerTypeFilter;
+        const matchesSearch = f.name.toLowerCase().includes(filter) || f.id.toLowerCase().includes(filter) || (f.phone && f.phone.includes(filter));
+        return matchesType && matchesSearch;
+      });
+
+      if (!filtered.length) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-400">No farmers found in this category.</td></tr>`;
+        return;
+      }
+
+      filtered.forEach(farmer => {
+        const entryCount = entries.filter(e => e.farmerId === farmer.id).length;
+        const mType = farmer.milkType || 'Cow';
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+        tr.innerHTML = `
+          <td class="py-3 px-2.5 font-bold text-indigo-700">${farmer.id}</td>
+          <td class="py-3 px-2.5 font-semibold text-slate-800">${farmer.name}</td>
+          <td class="py-3 px-2.5 text-center">${renderMilkTypeBadgeHTML(mType)}</td>
+          <td class="py-3 px-2.5 text-slate-600">${farmer.phone || '-'}</td>
+          <td class="py-3 px-2.5 text-right font-semibold text-slate-700">${entryCount}</td>
+          <td class="py-3 px-2.5 text-center space-x-3">
+            <button onclick="editFarmer('${farmer.id}')" class="text-indigo-600 hover:text-indigo-800 font-bold p-1" title="Edit">
+              <i class="fa-solid fa-pen"></i>
+            </button>
+            <button onclick="deleteFarmer('${farmer.id}')" class="text-rose-500 hover:text-rose-700 font-bold p-1" title="Delete">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function editFarmer(id) {
+      const f = farmers.find(item => item.id === id);
+      if (!f) return;
+      document.getElementById('farmerIdInput').value = f.id;
+      document.getElementById('farmerNameInput').value = f.name;
+      document.getElementById('farmerPhoneInput').value = f.phone || '';
+      const mType = f.milkType || 'Cow';
+      const radio = document.querySelector(`input[name="farmerMilkType"][value="${mType}"]`);
+      if (radio) radio.checked = true;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      document.getElementById('farmerNameInput').focus();
+    }
+
+    function deleteFarmer(id) {
+      if (confirm(`Are you sure you want to delete Farmer ID ${id}?`)) {
+        farmers = farmers.filter(f => f.id !== id);
+        localStorage.setItem(STORAGE_KEY_FARMERS, JSON.stringify(farmers));
+        pushToGoogleSheets();
+        renderFarmersTable();
+        renderFarmerSelects();
+        updateBatchPrintCounts();
+        showToast(`Farmer ID ${id} removed`);
+      }
+    }
+
+    function renderFarmerSelects() {
+      const entrySelect = document.getElementById('entryFarmerSelect');
+      const prevEntryVal = entrySelect.value;
+
+      entrySelect.innerHTML = '<option value="">-- Choose Farmer --</option>';
+
+      const cowFarmers = farmers.filter(f => (f.milkType || 'Cow') === 'Cow');
+      const buffaloFarmers = farmers.filter(f => f.milkType === 'Buffalo');
+
+      if (cowFarmers.length > 0) {
+        const grpCow = document.createElement('optgroup');
+        grpCow.label = '🐄 Cow Farmers (गाय दूध उत्पादक)';
+        cowFarmers.forEach(f => {
+          const opt = document.createElement('option');
+          opt.value = f.id;
+          opt.textContent = `${f.id} - ${f.name} [गाय]`;
+          grpCow.appendChild(opt);
+        });
+        entrySelect.appendChild(grpCow);
+      }
+
+      if (buffaloFarmers.length > 0) {
+        const grpBuf = document.createElement('optgroup');
+        grpBuf.label = '🐃 Buffalo Farmers (म्हैस दूध उत्पादक)';
+        buffaloFarmers.forEach(f => {
+          const opt = document.createElement('option');
+          opt.value = f.id;
+          opt.textContent = `${f.id} - ${f.name} [म्हैस]`;
+          grpBuf.appendChild(opt);
+        });
+        entrySelect.appendChild(grpBuf);
+      }
+
+      if (farmers.some(f => f.id === prevEntryVal)) {
+        entrySelect.value = prevEntryVal;
+      } else if (farmers.length > 0) {
+        entrySelect.value = farmers[0].id;
+        document.getElementById('entryFarmerId').value = farmers[0].id;
+      }
+
+      updateEntryMilkTypeBadge();
+    }
+
+    function syncFarmerById(idVal) {
+      const select = document.getElementById('entryFarmerSelect');
+      const found = farmers.find(f => f.id.toLowerCase() === idVal.trim().toLowerCase());
+      if (found) {
+        select.value = found.id;
+      } else {
+        select.value = '';
+      }
+      updateEntryMilkTypeBadge();
+    }
+
+    function syncFarmerBySelect(farmerId) {
+      document.getElementById('entryFarmerId').value = farmerId;
+      updateEntryMilkTypeBadge();
+    }
+
+    // ================= DAILY ENTRY SUBMISSION =================
+    function handleSaveEntry(e) {
+      e.preventDefault();
+      const farmerId = document.getElementById('entryFarmerSelect').value;
+      const date = document.getElementById('entryDate').value;
+      const shift = document.querySelector('input[name="entryShift"]:checked').value;
+      const liter = parseFloat(document.getElementById('entryLiter').value);
+      const fat = parseFloat(document.getElementById('entryFat').value);
+      const snf = parseFloat(document.getElementById('entrySnf').value);
+
+      if (!farmerId) {
+        showToast('Please select or specify a valid Farmer ID', 'error');
+        focusFarmerInput();
+        return;
+      }
+
+      const farmerObj = farmers.find(f => f.id === farmerId);
+      const farmerName = farmerObj ? farmerObj.name : farmerId;
+      const milkType = farmerObj ? (farmerObj.milkType || 'Cow') : 'Cow';
+
+      if (!date || isNaN(liter) || isNaN(fat) || isNaN(snf)) {
+        showToast('Please enter Liter, FAT, and SNF numbers', 'error');
+        return;
+      }
+
+      const existingIdx = entries.findIndex(item => item.farmerId === farmerId && item.date === date && item.shift === shift);
+      
+      if (existingIdx >= 0) {
+        const old = entries[existingIdx];
+        const confirmOverwrite = confirm(
+          `Entry already exists for this session!\n\n` +
+          `Farmer: ${farmerName} (#${farmerId}) [${formatMilkTypeLabel(milkType)}]\n` +
+          `Date: ${formatDisplayDate(date)}\n` +
+          `Shift: ${shift}\n\n` +
+          `Existing Record: ${old.liter.toFixed(1)} L | FAT: ${old.fat.toFixed(1)} | SNF: ${old.snf.toFixed(1)}\n` +
+          `New Record:      ${liter.toFixed(1)} L | FAT: ${fat.toFixed(1)} | SNF: ${snf.toFixed(1)}\n\n` +
+          `Click OK to overwrite with new values, or Cancel to keep existing.`
+        );
+
+        if (!confirmOverwrite) {
+          showToast('Entry cancelled', 'error');
+          focusFarmerInput();
+          return;
+        }
+
+        entries[existingIdx] = {
+          id: old.id,
+          farmerId,
+          farmer: farmerName,
+          milkType,
+          date,
+          shift,
+          liter,
+          fat,
+          snf,
+          timestamp: new Date().toISOString()
+        };
+        showToast(`Overwrote ${shift} entry for ${farmerName}!`);
+      } else {
+        const newEntry = {
+          id: 'entry_' + Date.now(),
+          farmerId,
+          farmer: farmerName,
+          milkType,
+          date,
+          shift,
+          liter,
+          fat,
+          snf,
+          timestamp: new Date().toISOString()
+        };
+        entries.push(newEntry);
+        showToast(`Added ${shift} (${formatMilkTypeLabel(milkType)} - ${liter} L) for ${farmerName}`);
+      }
+
+      localStorage.setItem(STORAGE_KEY_ENTRIES, JSON.stringify(entries));
+      pushToGoogleSheets();
+
+      document.getElementById('entryLiter').value = '';
+      document.getElementById('entryFat').value = '';
+      document.getElementById('entrySnf').value = '';
+      updateLiveEntryRatePreview();
+
+      renderQuickEntries();
+      if (!document.getElementById('viewBill').classList.contains('hidden')) {
+        generateBill();
+      }
+
+      focusFarmerInput();
+    }
+
+    function renderQuickEntries() {
+      const tbody = document.getElementById('quickEntriesBody');
+      const countEl = document.getElementById('quickEntriesCount');
+      tbody.innerHTML = '';
+
+      if (!entries.length) {
+        tbody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-slate-400">No shift entries recorded yet. Use the form above.</td></tr>`;
+        countEl.textContent = '0 entries registered';
+        return;
+      }
+
+      const sorted = [...entries].sort((a, b) => new Date(b.date + 'T' + (b.shift === 'Evening' ? '18:00' : '07:00')) - new Date(a.date + 'T' + (a.shift === 'Evening' ? '18:00' : '07:00')));
+      countEl.textContent = `${entries.length} total entries registered`;
+
+      sorted.slice(0, 10).forEach(item => {
+        const fObj = farmers.find(f => f.id === item.farmerId);
+        const mType = item.milkType || (fObj ? fObj.milkType : 'Cow') || 'Cow';
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+        tr.innerHTML = `
+          <td class="py-2.5 px-2.5 font-medium whitespace-nowrap">${formatDisplayDate(item.date)}</td>
+          <td class="py-2.5 px-2.5 font-semibold text-slate-800 whitespace-nowrap">
+            <span class="inline-block px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 text-[10px] mr-1 font-bold">#${item.farmerId || '1'}</span>
+            ${item.farmer}
+          </td>
+          <td class="py-2.5 px-2 text-center">${renderMilkTypeBadgeHTML(mType)}</td>
+          <td class="py-2.5 px-2 text-center">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${item.shift === 'Morning' ? 'bg-amber-100 text-amber-800' : 'bg-indigo-100 text-indigo-800'}">
+              ${item.shift}
+            </span>
+          </td>
+          <td class="py-2.5 px-2 text-right font-bold text-slate-900">${item.liter.toFixed(1)} L</td>
+          <td class="py-2.5 px-2 text-right font-medium">${item.fat.toFixed(1)}</td>
+          <td class="py-2.5 px-2 text-right font-medium">${item.snf.toFixed(1)}</td>
+          <td class="py-2.5 px-2 text-center">
+            <button onclick="deleteEntry('${item.id}')" class="text-rose-500 hover:text-rose-700 p-1.5 rounded transition" title="Delete">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderAllEntries() {
+      const tbody = document.getElementById('allEntriesBody');
+      tbody.innerHTML = '';
+      if (!entries.length) {
+        tbody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-slate-400">No shift entries recorded.</td></tr>`;
+        return;
+      }
+
+      const sorted = [...entries].sort((a, b) => b.date.localeCompare(a.date));
+      sorted.forEach(item => {
+        const fObj = farmers.find(f => f.id === item.farmerId);
+        const mType = item.milkType || (fObj ? fObj.milkType : 'Cow') || 'Cow';
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+        tr.innerHTML = `
+          <td class="py-3 px-3 font-medium whitespace-nowrap">${formatDisplayDate(item.date)}</td>
+          <td class="py-3 px-3 font-bold text-slate-800 whitespace-nowrap">
+            <span class="inline-block px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-xs mr-1 font-bold">#${item.farmerId || '1'}</span>
+            ${item.farmer}
+          </td>
+          <td class="py-3 px-3 text-center">${renderMilkTypeBadgeHTML(mType)}</td>
+          <td class="py-3 px-3 text-center">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${item.shift === 'Morning' ? 'bg-amber-100 text-amber-800' : 'bg-indigo-100 text-indigo-800'}">
+              ${item.shift}
+            </span>
+          </td>
+          <td class="py-3 px-3 text-right font-bold text-slate-900">${item.liter.toFixed(1)} L</td>
+          <td class="py-3 px-3 text-right font-semibold">${item.fat.toFixed(1)}</td>
+          <td class="py-3 px-3 text-right font-semibold">${item.snf.toFixed(1)}</td>
+          <td class="py-3 px-3 text-center">
+            <button onclick="deleteEntry('${item.id}')" class="text-rose-500 hover:text-rose-700 px-2 py-1 rounded transition text-xs font-semibold">
+              Delete
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function deleteEntry(id) {
+      const target = entries.find(item => item.id === id);
+      const details = target
+        ? `Farmer: ${target.farmer} (#${target.farmerId})\nDate: ${formatDisplayDate(target.date)}\nShift: ${target.shift}\nMilk: ${target.liter} L`
+        : 'this entry';
+
+      const confirmed = confirm(`Are you sure you want to delete this milk entry?\n\n${details}`);
+      if (!confirmed) return;
+
+      entries = entries.filter(item => item.id !== id);
+      localStorage.setItem(STORAGE_KEY_ENTRIES, JSON.stringify(entries));
+      pushToGoogleSheets();
+      showToast('Milk entry deleted successfully');
+      renderQuickEntries();
+      renderAllEntries();
+      if (!document.getElementById('viewBill').classList.contains('hidden')) {
+        generateBill();
+      }
+    }
+
+    function clearAllData() {
+      if (!entries.length) {
+        showToast('No entries to clear', 'error');
+        return;
+      }
+
+      const stepOne = confirm(`WARNING: You have ${entries.length} recorded milk entries.\n\nAre you sure you want to delete ALL milk records? Registered farmers will be kept.`);
+      if (!stepOne) return;
+
+      const stepTwo = confirm('FINAL CONFIRMATION:\nThis action is permanent and cannot be undone. Click OK to erase all records.');
+      if (!stepTwo) return;
+
+      entries = [];
+      localStorage.removeItem(STORAGE_KEY_ENTRIES);
+      pushToGoogleSheets();
+      renderQuickEntries();
+      renderAllEntries();
+      generateBill();
+      showToast('All milk entries have been cleared');
+    }
+
+    function handleCyclePresetChange() {
+      const cycleType = document.getElementById('billCycleOption').value;
+      const monthInputWrapper = document.getElementById('monthPickerWrapper');
+      const fromWrapper = document.getElementById('customDateFromWrapper');
+      const toWrapper = document.getElementById('customDateToWrapper');
+
+      if (cycleType === 'custom') {
+        monthInputWrapper.classList.add('hidden');
+        fromWrapper.classList.remove('hidden');
+        toWrapper.classList.remove('hidden');
+
+        if (!document.getElementById('billFromDate').value) {
+          const now = new Date();
+          document.getElementById('billFromDate').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+          document.getElementById('billToDate').value = now.toISOString().split('T')[0];
+        }
+      } else {
+        monthInputWrapper.classList.remove('hidden');
+        fromWrapper.classList.add('hidden');
+        toWrapper.classList.add('hidden');
+      }
+
+      generateBill();
+    }
+
+    // ================= BILL CALCULATION & RENDERING HELPERS =================
+    function computeBillDataForFarmer(farmerObj, startDate, endDate) {
+      const mType = farmerObj.milkType || 'Cow';
+      const farmerEntries = entries.filter(e =>
+        (e.farmerId && e.farmerId.toLowerCase() === farmerObj.id.toLowerCase()) ||
+        (!e.farmerId && e.farmer.toLowerCase() === farmerObj.name.toLowerCase())
+      );
+
+      const rows = [];
+      let cur = new Date(startDate);
+      let grandMorningL = 0;
+      let grandEveningL = 0;
+      let sumMorningFatProduct = 0;
+      let sumMorningSnfProduct = 0;
+      let sumEveningFatProduct = 0;
+      let sumEveningSnfProduct = 0;
+      let grandTotalMilk = 0;
+
+      while (cur <= endDate) {
+        const y = cur.getFullYear();
+        const m = String(cur.getMonth() + 1).padStart(2, '0');
+        const d = String(cur.getDate()).padStart(2, '0');
+        const dateIso = `${y}-${m}-${d}`;
+        const displayDate = `${d}/${m}/${y}`;
+
+        const morningItem = farmerEntries.find(e => e.date === dateIso && e.shift === 'Morning');
+        const eveningItem = farmerEntries.find(e => e.date === dateIso && e.shift === 'Evening');
+
+        const mL = morningItem ? morningItem.liter : 0;
+        const mF = morningItem ? morningItem.fat : 0;
+        const mS = morningItem ? morningItem.snf : 0;
+
+        const eL = eveningItem ? eveningItem.liter : 0;
+        const eF = eveningItem ? eveningItem.fat : 0;
+        const eS = eveningItem ? eveningItem.snf : 0;
+
+        const dayTotalMilk = mL + eL;
+        grandMorningL += mL;
+        grandEveningL += eL;
+        grandTotalMilk += dayTotalMilk;
+
+        if (mL > 0 && mF > 0) sumMorningFatProduct += mL * mF;
+        if (mL > 0 && mS > 0) sumMorningSnfProduct += mL * mS;
+
+        if (eL > 0 && eF > 0) sumEveningFatProduct += eL * eF;
+        if (eL > 0 && eS > 0) sumEveningSnfProduct += eL * eS;
+
+        rows.push({ displayDate, mL, mF, mS, eL, eF, eS, dayTotalMilk });
+        cur.setDate(cur.getDate() + 1);
+      }
+
+      const avgMorningFat = grandMorningL > 0 ? (sumMorningFatProduct / grandMorningL).toFixed(2) : '-';
+      const avgMorningSnf = grandMorningL > 0 ? (sumMorningSnfProduct / grandMorningL).toFixed(2) : '-';
+      const avgEveningFat = grandEveningL > 0 ? (sumEveningFatProduct / grandEveningL).toFixed(2) : '-';
+      const avgEveningSnf = grandEveningL > 0 ? (sumEveningSnfProduct / grandEveningL).toFixed(2) : '-';
+
+      const totalFatUnits = sumMorningFatProduct + sumEveningFatProduct;
+      const totalSnfUnits = sumMorningSnfProduct + sumEveningSnfProduct;
+      const totalWeightedFat = grandTotalMilk > 0 ? (totalFatUnits / grandTotalMilk).toFixed(2) : '0.00';
+      const totalWeightedSnf = grandTotalMilk > 0 ? (totalSnfUnits / grandTotalMilk).toFixed(2) : '0.00';
+
+      let ratePerLiter = 0;
+      let chartFat = 0;
+      let chartSnf = 0;
+      if (grandTotalMilk > 0) {
+        chartFat = parseFloat(Number(totalWeightedFat).toFixed(1));
+        chartSnf = parseFloat(Number(totalWeightedSnf).toFixed(1));
+        ratePerLiter = lookupRateFromChart(mType, chartFat, chartSnf);
+      }
+
+      const netPayableAmount = Math.round(grandTotalMilk * ratePerLiter);
+
+      return {
+        farmerObj,
+        mType,
+        rows,
+        grandMorningL,
+        avgMorningFat,
+        avgMorningSnf,
+        grandEveningL,
+        avgEveningFat,
+        avgEveningSnf,
+        grandTotalMilk,
+        totalWeightedFat,
+        totalWeightedSnf,
+        chartFat,
+        chartSnf,
+        ratePerLiter,
+        netPayableAmount
+      };
+    }
+
+    function generateBill() {
+      const enteredId = document.getElementById('billFarmerId').value.trim();
+
+      const farmerObj = getBillFarmerObject() || {
+        id: enteredId || '-',
+        name: enteredId ? `Unknown ID (#${enteredId})` : 'Select Farmer ID',
+        phone: '-',
+        milkType: 'Cow'
+      };
+
+      const range = getActiveCycleRange();
+      if (!range) return;
+      const { startDate, endDate } = range;
+
+      const data = computeBillDataForFarmer(farmerObj, startDate, endDate);
+
+      const tbody = document.getElementById('billTableBody');
+      tbody.innerHTML = '';
+
+      data.rows.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.className = "border-b border-slate-300 hover:bg-slate-50";
+        tr.innerHTML = `
+          <td class="border border-slate-700 py-1.5 px-1.5 font-medium whitespace-nowrap">${r.displayDate}</td>
+          <td class="border border-slate-700 py-1.5 px-1 text-right">${r.mL > 0 ? r.mL.toFixed(1) : ''}</td>
+          <td class="border border-slate-700 py-1.5 px-1">${r.mF > 0 ? r.mF.toFixed(1) : ''}</td>
+          <td class="border border-slate-700 py-1.5 px-1">${r.mS > 0 ? r.mS.toFixed(1) : ''}</td>
+          <td class="border border-slate-700 py-1.5 px-1 text-right">${r.eL > 0 ? r.eL.toFixed(1) : ''}</td>
+          <td class="border border-slate-700 py-1.5 px-1">${r.eF > 0 ? r.eF.toFixed(1) : ''}</td>
+          <td class="border border-slate-700 py-1.5 px-1">${r.eS > 0 ? r.eS.toFixed(1) : ''}</td>
+          <td class="border border-slate-700 py-1.5 px-1 text-right font-bold bg-slate-50">${r.dayTotalMilk > 0 ? r.dayTotalMilk.toFixed(1) : ''}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      const rateDisplayEl = document.getElementById('billChartRateDisplay');
+      const rateNoteEl = document.getElementById('billRateSourceNote');
+
+      if (data.grandTotalMilk > 0) {
+        rateDisplayEl.textContent = `₹ ${data.ratePerLiter.toFixed(2)}`;
+        rateNoteEl.textContent = `${data.mType === 'Buffalo' ? 'म्हैस' : 'गाय'} (${data.chartFat.toFixed(1)} / ${data.chartSnf.toFixed(1)})`;
+      } else {
+        rateDisplayEl.textContent = '₹ 0.00';
+        rateNoteEl.textContent = `${data.mType === 'Buffalo' ? 'म्हैस' : 'गाय'} Chart`;
+      }
+
+      document.getElementById('billPrintFarmer').textContent = farmerObj.name;
+      document.getElementById('billPrintFarmerId').textContent = farmerObj.id;
+      document.getElementById('billPrintMilkType').textContent = formatMilkTypeLabel(data.mType);
+      document.getElementById('billPrintFarmerPhone').textContent = farmerObj.phone || '-';
+      document.getElementById('billPrintRange').textContent = `${formatDisplayDateObj(startDate)} to ${formatDisplayDateObj(endDate)}`;
+      document.getElementById('billPrintRate').textContent = `₹ ${data.ratePerLiter.toFixed(2)} / Liter`;
+
+      document.getElementById('ftTotalMorningL').textContent = data.grandMorningL > 0 ? data.grandMorningL.toFixed(1) : '-';
+      document.getElementById('ftAvgMorningFat').textContent = data.avgMorningFat;
+      document.getElementById('ftAvgMorningSnf').textContent = data.avgMorningSnf;
+
+      document.getElementById('ftTotalEveningL').textContent = data.grandEveningL > 0 ? data.grandEveningL.toFixed(1) : '-';
+      document.getElementById('ftAvgEveningFat').textContent = data.avgEveningFat;
+      document.getElementById('ftAvgEveningSnf').textContent = data.avgEveningSnf;
+
+      document.getElementById('ftGrandMilk').textContent = data.grandTotalMilk > 0 ? data.grandTotalMilk.toFixed(1) : '0.0';
+
+      document.getElementById('summaryTotalMilk').textContent = data.grandTotalMilk.toFixed(1) + ' L';
+      document.getElementById('summaryAvgFat').textContent = data.totalWeightedFat;
+      document.getElementById('summaryAvgSnf').textContent = data.totalWeightedSnf;
+      document.getElementById('summaryTotalAmount').textContent = '₹ ' + data.netPayableAmount.toLocaleString('en-IN');
+    }
+
+    // Single Bill Print Trigger
+    function printSingleBill() {
+      document.body.classList.remove('batch-print-mode');
+      window.print();
+    }
+
+    // Batch Print All Cow or All Buffalo Bills
+    function printAllBillsByType(targetMilkType) {
+      const range = getActiveCycleRange();
+      if (!range) {
+        showToast('Please select a valid billing cycle first', 'error');
+        return;
+      }
+      const { startDate, endDate } = range;
+
+      const matchingFarmers = farmers.filter(f => (f.milkType || 'Cow') === targetMilkType);
+
+      if (!matchingFarmers.length) {
+        showToast(`No ${formatMilkTypeLabel(targetMilkType)} farmers registered!`, 'error');
+        return;
+      }
+
+      // Filter to farmers who have milk entries in this billing cycle (or fallback to all if none have entries yet)
+      const activeFarmersWithMilk = matchingFarmers.filter(f => {
+        const d = computeBillDataForFarmer(f, startDate, endDate);
+        return d.grandTotalMilk > 0;
+      });
+
+      const listToPrint = activeFarmersWithMilk.length > 0 ? activeFarmersWithMilk : matchingFarmers;
+      const rangeStr = `${formatDisplayDateObj(startDate)} to ${formatDisplayDateObj(endDate)}`;
+
+      const batchContainer = document.getElementById('batchPrintArea');
+      batchContainer.innerHTML = listToPrint.map(fObj => {
+        const d = computeBillDataForFarmer(fObj, startDate, endDate);
+        const rowsHtml = d.rows.map(r => `
+          <tr class="border-b border-slate-300">
+            <td class="border border-slate-700 py-1.5 px-1.5 font-medium whitespace-nowrap">${r.displayDate}</td>
+            <td class="border border-slate-700 py-1.5 px-1 text-right">${r.mL > 0 ? r.mL.toFixed(1) : ''}</td>
+            <td class="border border-slate-700 py-1.5 px-1">${r.mF > 0 ? r.mF.toFixed(1) : ''}</td>
+            <td class="border border-slate-700 py-1.5 px-1">${r.mS > 0 ? r.mS.toFixed(1) : ''}</td>
+            <td class="border border-slate-700 py-1.5 px-1 text-right">${r.eL > 0 ? r.eL.toFixed(1) : ''}</td>
+            <td class="border border-slate-700 py-1.5 px-1">${r.eF > 0 ? r.eF.toFixed(1) : ''}</td>
+            <td class="border border-slate-700 py-1.5 px-1">${r.eS > 0 ? r.eS.toFixed(1) : ''}</td>
+            <td class="border border-slate-700 py-1.5 px-1 text-right font-bold bg-slate-50">${r.dayTotalMilk > 0 ? r.dayTotalMilk.toFixed(1) : ''}</td>
+          </tr>
+        `).join('');
+
+        return `
+          <div class="bill-page-break bg-white">
+            <div class="text-center pb-3 mb-3 border-b-2 border-slate-800">
+              <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight leading-tight">
+                श्री सिद्धनाथ दूध संकलन केंद्र, नांगरेमळा
+              </h1>
+              <div class="inline-block mt-1.5 px-5 py-0.5 bg-slate-900 text-white font-extrabold tracking-widest text-xs uppercase rounded">
+                MILK BILL
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 pb-3 mb-3 text-xs font-semibold border-b border-slate-300">
+              <div class="space-y-1">
+                <div><span class="text-slate-500">Farmer:</span> <span class="text-slate-900 font-bold uppercase">${fObj.name}</span></div>
+                <div>
+                  <span class="text-slate-500">ID:</span> <span class="text-slate-900 font-bold">${fObj.id}</span>
+                  <span class="mx-1.5 text-slate-300">|</span>
+                  <span class="text-slate-500">Type:</span> <span class="text-slate-900 font-extrabold">${formatMilkTypeLabel(d.mType)}</span>
+                </div>
+                <div><span class="text-slate-500">Cycle:</span> <span class="text-slate-800">${rangeStr}</span></div>
+              </div>
+              <div class="space-y-1 text-right">
+                <div><span class="text-slate-500">Center Mob:</span> <span class="text-slate-900 font-bold">9420681567</span></div>
+                <div><span class="text-slate-500">Farmer Mob:</span> <span class="text-slate-900 font-bold">${fObj.phone || '-'}</span></div>
+                <div><span class="text-slate-500">Milk Rate:</span> <span class="text-slate-900 font-bold">₹ ${d.ratePerLiter.toFixed(2)} / Liter</span></div>
+              </div>
+            </div>
+
+            <table class="w-full border-collapse border border-slate-800 text-center text-xs">
+              <thead>
+                <tr class="bg-slate-100 text-slate-900 font-bold">
+                  <th rowspan="2" class="border border-slate-700 py-2 px-1.5 w-[100px]">Date</th>
+                  <th colspan="3" class="border border-slate-700 py-1 bg-amber-50">Morning</th>
+                  <th colspan="3" class="border border-slate-700 py-1 bg-indigo-50">Evening</th>
+                  <th rowspan="2" class="border border-slate-700 py-2 px-1.5 w-[80px]">Total</th>
+                </tr>
+                <tr class="bg-slate-50 font-semibold text-slate-700">
+                  <th class="border border-slate-700 py-1 px-1">Liter</th>
+                  <th class="border border-slate-700 py-1 px-1">FAT</th>
+                  <th class="border border-slate-700 py-1 px-1">SNF</th>
+                  <th class="border border-slate-700 py-1 px-1">Liter</th>
+                  <th class="border border-slate-700 py-1 px-1">FAT</th>
+                  <th class="border border-slate-700 py-1 px-1">SNF</th>
+                </tr>
+              </thead>
+              <tbody class="font-medium text-slate-800">
+                ${rowsHtml}
+              </tbody>
+              <tfoot class="border-t-2 border-slate-900 font-bold text-slate-900 bg-slate-50">
+                <tr>
+                  <td class="border border-slate-700 py-1.5 px-1 text-center">TOTAL</td>
+                  <td class="border border-slate-700 py-1.5 px-1 text-right">${d.grandMorningL > 0 ? d.grandMorningL.toFixed(1) : '-'}</td>
+                  <td class="border border-slate-700 py-1.5 px-1">${d.avgMorningFat}</td>
+                  <td class="border border-slate-700 py-1.5 px-1">${d.avgMorningSnf}</td>
+                  <td class="border border-slate-700 py-1.5 px-1 text-right">${d.grandEveningL > 0 ? d.grandEveningL.toFixed(1) : '-'}</td>
+                  <td class="border border-slate-700 py-1.5 px-1">${d.avgEveningFat}</td>
+                  <td class="border border-slate-700 py-1.5 px-1">${d.avgEveningSnf}</td>
+                  <td class="border border-slate-700 py-1.5 px-1 text-right bg-slate-200">${d.grandTotalMilk > 0 ? d.grandTotalMilk.toFixed(1) : '0.0'}</td>
+                </tr>
+              </tfoot>
+            </table>
+
+            <div class="mt-5 border-2 border-slate-800 rounded-lg p-3.5 bg-slate-50 flex justify-between items-center gap-4">
+              <div class="grid grid-cols-3 gap-6 text-left">
+                <div>
+                  <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Milk</p>
+                  <p class="text-lg font-extrabold text-slate-900">${d.grandTotalMilk.toFixed(1)} L</p>
+                </div>
+                <div>
+                  <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Avg FAT</p>
+                  <p class="text-lg font-extrabold text-slate-900">${d.totalWeightedFat}</p>
+                </div>
+                <div>
+                  <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Avg SNF</p>
+                  <p class="text-lg font-extrabold text-slate-900">${d.totalWeightedSnf}</p>
+                </div>
+              </div>
+              
+              <div class="border-l border-slate-300 pl-6 text-right">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">निव्वळ देय रक्कम (Net Payable)</span>
+                <div class="text-2xl font-extrabold text-emerald-800">₹ ${d.netPayableAmount.toLocaleString('en-IN')}</div>
+              </div>
+            </div>
+
+            <div class="mt-10 pt-4 flex justify-between items-end text-xs font-semibold text-slate-700">
+              <div class="text-center">
+                <div class="w-32 border-b border-dashed border-slate-400 mb-1 mx-auto"></div>
+                <p>दूध उत्पादक स्वाक्षरी</p>
+              </div>
+              <div class="text-center">
+                <div class="w-32 border-b border-dashed border-slate-400 mb-1 mx-auto"></div>
+                <p>अधिकृत स्वाक्षरी</p>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      batchContainer.classList.remove('hidden');
+      document.body.classList.add('batch-print-mode');
+      showToast(`Preparing ${listToPrint.length} ${formatMilkTypeLabel(targetMilkType)} bill(s)...`);
+
+      setTimeout(() => {
+        window.print();
+      }, 150);
+    }
+
+    // ================= WHATSAPP SHARE HANDLER =================
+    function shareBillViaWhatsApp() {
+      const farmerObj = getBillFarmerObject();
+      if (!farmerObj) {
+        showToast('Please enter a valid Farmer ID first', 'error');
+        return;
+      }
+      const mType = farmerObj.milkType || 'Cow';
+
+      const rangeText = document.getElementById('billPrintRange').textContent;
+      const totalMilkText = document.getElementById('summaryTotalMilk').textContent;
+      const avgFatText = document.getElementById('summaryAvgFat').textContent;
+      const avgSnfText = document.getElementById('summaryAvgSnf').textContent;
+      const rateText = document.getElementById('billPrintRate').textContent;
+      const netAmountText = document.getElementById('summaryTotalAmount').textContent;
+
+      let text = `🥛 *श्री सिद्धनाथ दूध संकलन केंद्र, नांगरेमळा*\n`;
+      text += `📍 मो. 9420681567\n`;
+      text += `---------------------------------------\n`;
+      text += `👤 *उत्पादक:* ${farmerObj.name} (#${farmerObj.id})\n`;
+      text += `🐄 *दूध प्रकार:* ${formatMilkTypeLabel(mType)}\n`;
+      text += `📅 *कालावधी:* ${rangeText}\n`;
+      text += `---------------------------------------\n`;
+      text += `📦 *एकूण दूध संकलन:* ${totalMilkText}\n`;
+      text += `📊 *सरासरी फॅट (FAT):* ${avgFatText}\n`;
+      text += `📊 *सरासरी एसएनएफ (SNF):* ${avgSnfText}\n`;
+      text += `💵 *दूध दर:* ${rateText}\n`;
+      text += `---------------------------------------\n`;
+      text += `✅ *निव्वळ देय रक्कम (Net Payable):* *${netAmountText}*\n`;
+      text += `---------------------------------------\n`;
+      text += `_सिद्धनाथ दूध संकलन केंद्रात आपले स्वागत आहे!_`;
+
+      const encodedText = encodeURIComponent(text);
+
+      let phoneParam = '';
+      if (farmerObj.phone && farmerObj.phone.trim()) {
+        const cleanPhone = farmerObj.phone.replace(/[^0-9]/g, '');
+        if (cleanPhone.length === 10) {
+          phoneParam = `91${cleanPhone}`;
+        } else if (cleanPhone.length > 10) {
+          phoneParam = cleanPhone;
+        }
+      }
+
+      const whatsappUrl = phoneParam 
+        ? `https://api.whatsapp.com/send?phone=${phoneParam}&text=${encodedText}`
+        : `https://api.whatsapp.com/send?text=${encodedText}`;
+
+      window.open(whatsappUrl, '_blank');
+      showToast('Opening WhatsApp Bill Share...');
+    }
+
+    function formatDisplayDate(isoDateStr) {
+      if (!isoDateStr) return '';
+      const [y, m, d] = isoDateStr.split('-');
+      return `${d}/${m}/${y}`;
+    }
+
+    function formatDisplayDateObj(d) {
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const yyyy = d.getFullYear();
+      return `${dd}/${mm}/${yyyy}`;
+    }
+
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toastMessage');
+      const text = document.getElementById('toastText');
+      const icon = document.getElementById('toastIcon');
+
+      if (!toast) return;
+
+      if (toastTimeout) {
+        clearTimeout(toastTimeout);
+      }
+
+      text.textContent = message;
+
+      if (type === 'error') {
+        toast.classList.remove('bg-emerald-600');
+        toast.classList.add('bg-rose-600');
+        if (icon) icon.className = "fa-solid fa-circle-exclamation text-lg shrink-0";
+      } else {
+        toast.classList.remove('bg-rose-600');
+        toast.classList.add('bg-emerald-600');
+        if (icon) icon.className = "fa-solid fa-circle-check text-lg shrink-0";
+      }
+
+      toast.classList.remove('-translate-y-32', 'opacity-0', 'pointer-events-none');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('-translate-y-32', 'opacity-0', 'pointer-events-none');
+      }, 2500);
+    }
+
+    function loadSampleData() {
+      const targetFarmer = farmers[0] || { id: "1", name: "Sobha Narayan Nangare", milkType: "Cow" };
+      const sample = [
+        { date: "2026-10-01", shift: "Morning", liter: 1.0, fat: 4.8, snf: 8.6 },
+        { date: "2026-10-01", shift: "Evening", liter: 0.8, fat: 4.5, snf: 8.5 },
+        { date: "2026-10-02", shift: "Morning", liter: 1.0, fat: 4.9, snf: 8.7 },
+        { date: "2026-10-02", shift: "Evening", liter: 0.8, fat: 4.6, snf: 8.6 },
+        { date: "2026-10-03", shift: "Morning", liter: 1.0, fat: 4.7, snf: 8.5 },
+        { date: "2026-10-03", shift: "Evening", liter: 0.7, fat: 4.6, snf: 8.5 },
+        { date: "2026-10-04", shift: "Morning", liter: 1.1, fat: 5.0, snf: 8.8 },
+        { date: "2026-10-04", shift: "Evening", liter: 0.8, fat: 4.5, snf: 8.4 },
+        { date: "2026-10-05", shift: "Morning", liter: 1.0, fat: 4.8, snf: 8.6 },
+        { date: "2026-10-05", shift: "Evening", liter: 0.9, fat: 4.7, snf: 8.6 },
+        { date: "2026-10-06", shift: "Morning", liter: 1.2, fat: 4.9, snf: 8.7 },
+        { date: "2026-10-06", shift: "Evening", liter: 0.8, fat: 4.6, snf: 8.5 },
+        { date: "2026-10-07", shift: "Morning", liter: 1.0, fat: 4.8, snf: 8.6 },
+        { date: "2026-10-07", shift: "Evening", liter: 0.8, fat: 4.5, snf: 8.5 },
+        { date: "2026-10-08", shift: "Morning", liter: 1.1, fat: 5.1, snf: 8.9 },
+        { date: "2026-10-08", shift: "Evening", liter: 0.7, fat: 4.7, snf: 8.6 },
+        { date: "2026-10-09", shift: "Morning", liter: 1.0, fat: 4.8, snf: 8.6 },
+        { date: "2026-10-09", shift: "Evening", liter: 0.8, fat: 4.6, snf: 8.5 },
+        { date: "2026-10-10", shift: "Morning", liter: 1.0, fat: 4.9, snf: 8.7 },
+        { date: "2026-10-10", shift: "Evening", liter: 0.9, fat: 4.6, snf: 8.6 }
+      ];
+
+      sample.forEach(s => {
+        entries.push({
+          id: 'sample_' + Math.random().toString(36).substr(2, 9),
+          farmerId: targetFarmer.id,
+          farmer: targetFarmer.name,
+          milkType: targetFarmer.milkType || 'Cow',
+          date: s.date,
+          shift: s.shift,
+          liter: s.liter,
+          fat: s.fat,
+          snf: s.snf,
+          timestamp: new Date().toISOString()
+        });
+      });
+
+      localStorage.setItem(STORAGE_KEY_ENTRIES, JSON.stringify(entries));
+      pushToGoogleSheets();
+
+      renderQuickEntries();
+      showToast(`Loaded sample 10-day entries for ${targetFarmer.name}!`);
+      
+      document.getElementById('billMonth').value = '2026-10';
+      document.getElementById('billCycleOption').value = '1-10';
+      document.getElementById('billFarmerId').value = targetFarmer.id;
+      handleBillFarmerIdInput();
+    }
+  </script>
+</body>
+</html>
